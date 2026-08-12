@@ -576,3 +576,19 @@ function Window({ window, onClose, onMinimize, onMaximize }) {
 }
 
 ReactDOM.render(<SeismicExplorer />, document.getElementById('root'));
+// Коли затискаємо мишку будь-де на сторінці (початок руху / перетягування):
+document.addEventListener('mousedown', (e) => {
+    // Перевіряємо, чи ми затиснули саме шапку вікна
+    if (e.target.closest('.window-title')) {
+        document.querySelectorAll('.window-iframe').forEach(iframe => {
+            iframe.classList.add('iframe-dragging');
+        });
+    }
+});
+
+// Коли відпускаємо мишку (завершення руху):
+document.addEventListener('mouseup', () => {
+    document.querySelectorAll('.window-iframe').forEach(iframe => {
+        iframe.classList.remove('iframe-dragging');
+    });
+});
