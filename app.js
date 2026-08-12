@@ -373,7 +373,7 @@ function SeismicExplorer() {
                     className="start-menu"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="start-menu-item">
+                    <div className="start-menu-item has-submenu">
                         🗂️ Programs
                         <div className="submenu">
                             {config.projects.map(p => (
@@ -398,7 +398,7 @@ function SeismicExplorer() {
 
                     <div className="start-menu-item separator"></div>
 
-                    <div className="start-menu-item">
+                    <div className="start-menu-item has-submenu">
                         📄 Documents
                         <div className="submenu">
                             <div 
@@ -417,7 +417,7 @@ function SeismicExplorer() {
                         </div>
                     </div>
 
-                    <div className="start-menu-item">
+                    <div className="start-menu-item has-submenu">
                         ⚙️ Settings
                         <div className="submenu">
                             <div 
@@ -432,7 +432,7 @@ function SeismicExplorer() {
                         </div>
                     </div>
 
-                    <div className="start-menu-item">
+                    <div className="start-menu-item has-submenu">
                         ℹ️ Help
                         <div className="submenu">
                             <a href={config.seismic.docs} target="_blank" rel="noopener noreferrer" className="submenu-item" style={{ textDecoration: 'none', color: 'inherit' }}>
