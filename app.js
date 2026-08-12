@@ -1,3 +1,20 @@
+// Стан для контекстного меню кошика
+const [binMenu, setBinMenu] = useState({ visible: false, x: 0, y: 0 });
+
+// Відкриття контекстного меню при правому кліку
+const handleBinContextMenu = (e) => {
+    e.preventDefault(); // Забороняємо дефолтне меню браузера
+    setBinMenu({
+        visible: true,
+        x: e.clientX,
+        y: e.clientY
+    });
+};
+
+// Закриття контекстного меню
+const closeBinMenu = () => {
+    if (binMenu.visible) setBinMenu({ ...binMenu, visible: false });
+};
 const BIN_EMPTY = "assets/empty.png";
 const BIN_FULL = "assets/full.png";
 const { useState, useEffect, useRef } = React;
@@ -303,13 +320,15 @@ function SeismicExplorer() {
         logo: recycledItems.length > 0 ? BIN_FULL : BIN_EMPTY,
         isRecycleBin: true
     })}
+    onContextMenu={handleBinContextMenu}
+    onClick={closeBinMenu}
     style={{ 
         cursor: 'pointer', 
         userSelect: 'none',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        marginBottom: '15px' // піднімає іконку над панеллю завдань
+        marginBottom: '15px'
     }}
 >
     <div className="bin-image">
@@ -665,6 +684,86 @@ function Window({ window, onClose, onMinimize, onMaximize, recycledItems, onRest
         </>
     )}
 </div>
+    {/* Context Menu for Recycle Bin */}
+{binMenu.visible && (
+    <div 
+        onClick={closeBinMenu}
+        onContextMenu={(e) => { e.preventDefault(); closeBinMenu(); }}
+        style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            zIndex: 9998
+        }}
+    >
+        <div 
+            style={{
+                position: 'absolute',
+                top: `${binMenu.y}px`,
+                left: `${binMenu.x}px`,
+                backgroundColor: '#c0c0c0',
+                border: '2px solid',
+                borderColor: '#ffffff #808080 #808080 #ffffff',
+                boxShadow: '2px 2px 5px rgba(0,0,0,0.3)',
+                padding: '2px',
+                width: '150px',
+                zIndex: 9999
+            }}
+        >
+            <div 
+                onClick={() => {
+                    openWindow({
+                        id: 'recycle-bin',
+                        name: 'Recycle Bin',
+                        logo: recycledItems.length > 0 ? BIN_FULL : BIN_EMPTY,
+                        isRecycleBin: true
+                    });
+                    closeBinMenu();
+                }}
+                style={{
+                    padding: '4px 8px',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    color: '#000'
+                }}
+                onMouseEnter={(e) => { e.target.style.backgroundColor = '#000080'; e.target.style.color = '#fff'; }}
+                onMouseLeave={(e) => { e.target.style.backgroundColor = 'transparent'; e.target.style.color = '#000'; }}
+            >
+                Open
+            </div>
+
+            <div 
+                onClick={() => {
+                    if (recycledItems.length > 0 && window.confirm('Are you sure you want to permanently delete all items?')) {
+                        setRecycledItems([]); // Очищаємо масив корзини
+                    }
+                    closeBinMenu();
+                }}
+                style={{
+                    padding: '4px 8px',
+                    cursor: recycledItems.length > 0 ? 'pointer' : 'default',
+                    fontSize: '12px',
+                    color: recycledItems.length > 0 ? '#000' : '#808080'
+                }}
+                onMouseEnter={(e) => {
+                    if (recycledItems.length > 0) {
+                        e.target.style.backgroundColor = '#000080';
+                        e.target.style.color = '#fff';
+                    }
+                }}
+                onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = 'transparent';
+                    e.target.style.color = recycledItems.length > 0 ? '#000' : '#808080';
+                }}
+            >
+                Empty Recycle Bin
+            </div>
+        </div>
+    </div>
+)}
         </div>
     );
 }
