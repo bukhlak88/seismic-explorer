@@ -110,6 +110,7 @@
     "logo": "assets/seismic-logo.svg",
     "docs": "https://docs.seismic.systems/",
     "discord": "https://discord.com/invite/seismic",
-    "twitter": "https://x.com/SeismicSys"
+    "twitter": "https://x.com/SeismicSys",
+    "url": "https://www.seismic.systems/"
   }
 }
