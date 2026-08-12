@@ -293,16 +293,21 @@ function SeismicExplorer() {
             })}
 
             {/* Recycle Bin */}
-            <div
-                className="recycle-bin"
-                onDoubleClick={() => setShowRecycleBin(true)}
-                style={{ cursor: 'pointer', userSelect: 'none' }}
-            >
-                <div className="bin-image">
-                    <span style={{ fontSize: '40px' }}>🗑️</span>
-                </div>
-                <div className="bin-label">Recycle Bin ({recycledItems.length})</div>
-            </div>
+<div
+    className="recycle-bin"
+    onDoubleClick={() => openWindow({
+        id: 'recycle-bin',
+        name: 'Recycle Bin',
+        logo: 'assets/recycle-bin.png', // чи будь-яка ваша іконка
+        isRecycleBin: true
+    })}
+    style={{ cursor: 'pointer', userSelect: 'none' }}
+>
+    <div className="bin-image">
+        <span style={{ fontSize: '40px' }}>{recycledItems.length > 0 ? '🗑️' : '🗑️'}</span>
+    </div>
+    <div className="bin-label">Recycle Bin ({recycledItems.length})</div>
+</div>
 
             {/* Taskbar */}
             <div className="taskbar">
