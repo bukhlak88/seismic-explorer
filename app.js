@@ -345,17 +345,21 @@ const toggleMaximizeWindow = (windowId) => {
         <div className="start-menu-item">
             🗂️ Programs
             <div className="submenu">
-                {config.projects.map(p => (
-                    <div 
-                        key={p.id}
-                        className="submenu-item"
-                        onClick={() => openWindow(p)}
-                    >
-                        <img src={p.logo} alt={p.name} style={{ pointerEvents: 'none' }} />
-                        {p.name}
-                    </div>
-                ))}
-            </div>
+    {config.projects.map(p => (
+        <div 
+            key={p.id}
+            className="submenu-item"
+            onClick={() => {
+                // Відкриває Twitter проєкту в новій вкладці
+                window.open(p.twitter || p.url, '_blank', 'noopener,noreferrer');
+                setShowStartMenu(false); // Закриває Start Menu після кліку
+            }}
+        >
+            <img src={p.logo} alt={p.name} style={{ pointerEvents: 'none' }} />
+            {p.name}
+        </div>
+    ))}
+</div>
         </div>
 
         <div className="start-menu-item separator"></div>
