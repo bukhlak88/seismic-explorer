@@ -84,13 +84,13 @@ body {
     z-index: 100;
 }
 
-.start-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2px 6px;
-    height: 28px;
-    cursor: pointer;
+.start-button .start-logo {
+    height: 18px;
+    width: auto;
+    object-fit: contain;
+    pointer-events: none;
+    /* Перетворює будь-який колір всередині SVG на чистий чорний/темний */
+    filter: brightness(0); 
 }
 
 .start-button .start-logo {
