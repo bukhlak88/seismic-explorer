@@ -207,7 +207,7 @@ body {
 .submenu {
     position: absolute;
     left: 100%;
-    top: 0;
+    bottom: 0;
     background: linear-gradient(to right, #c0c0c0, #a0a0a0);
     border: 2px solid;
     border-color: #dfdfdf #808080 #808080 #dfdfdf;
