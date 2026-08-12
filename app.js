@@ -129,19 +129,28 @@ function SeismicExplorer() {
         playAudio('open');
         const windowId = `window-${project.id}`;
         
-        setWindows(prev => ({
-            ...prev,
-            [windowId]: {
-                id: windowId,
-                project,
-                x: 100,
-                y: 100,
-                width: 900,
-                height: 600,
-                minimized: false,
-                focused: true
+        setWindows(prev => {
+            if (prev[windowId]) {
+                // Якщо вікно вже існувало, просто розгортаємо його та робимо активним
+                return {
+                    ...prev,
+                    [windowId]: { ...prev[windowId], minimized: false, focused: true }
+                };
             }
-        }));
+            return {
+                ...prev,
+                [windowId]: {
+                    id: windowId,
+                    project,
+                    x: 100,
+                    y: 100,
+                    width: 900,
+                    height: 600,
+                    minimized: false,
+                    focused: true
+                }
+            };
+        });
         setShowStartMenu(false);
     };
 
@@ -742,21 +751,19 @@ function SeismicExplorer() {
                 </div>
             )}
 
-            {/* Windows */}
+            {/* Windows (рендеримо всі створені вікна, але приховуємо згорнуті через display: none) */}
             {Object.values(windows).map(window => (
-                !window.minimized && (
-                    <Window 
-                        key={window.id}
-                        window={window}
-                        onClose={() => closeWindow(window.id)}
-                        onMinimize={() => minimizeWindow(window.id)}
-                        onMaximize={() => toggleMaximizeWindow(window.id)}
-                        onUpdateGeometry={(geom) => updateWindowGeometry(window.id, geom)}
-                        recycledItems={recycledItems}
-                        onRestoreItem={restoreIcon}
-                        onEmptyBin={requestEmptyRecycleBin}
-                    />
-                )
+                <Window 
+                    key={window.id}
+                    window={window}
+                    onClose={() => closeWindow(window.id)}
+                    onMinimize={() => minimizeWindow(window.id)}
+                    onMaximize={() => toggleMaximizeWindow(window.id)}
+                    onUpdateGeometry={(geom) => updateWindowGeometry(window.id, geom)}
+                    recycledItems={recycledItems}
+                    onRestoreItem={restoreIcon}
+                    onEmptyBin={requestEmptyRecycleBin}
+                />
             ))}
         </div>
     );
@@ -855,28 +862,30 @@ function Window({ window, onClose, onMinimize, onMaximize, onUpdateGeometry, rec
         top: '0px',
         width: '100vw',
         height: 'calc(100vh - 38px)',
-        zIndex: window.focused ? 11 : 10
+        zIndex: window.focused ? 11 : 10,
+        display: window.minimized ? 'none' : 'flex'
     } : {
         left: `${window.x}px`,
         top: `${window.y}px`,
         width: `${window.width}px`,
         height: `${window.height}px`,
-        zIndex: window.focused ? 11 : 10
+        zIndex: window.focused ? 11 : 10,
+        display: window.minimized ? 'none' : 'flex'
     };
 
     return (
-        <div className="window" style={{ ...windowStyle, position: 'absolute', display: 'flex', flexDirection: 'column' }}>
-            {/* Ресайзери по краях та кутах */}
+        <div className="window" style={{ ...windowStyle, position: 'absolute', flexDirection: 'column' }}>
+            {/* Ресайзери з класичними XP курсорами */}
             {!window.maximized && (
                 <>
-                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'top')} style={{ position: 'absolute', top: '-4px', left: 0, right: 0, height: '8px', cursor: 'default', zIndex: 12 }}></div>
-                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'bottom')} style={{ position: 'absolute', bottom: '-4px', left: 0, right: 0, height: '8px', cursor: 'default', zIndex: 12 }}></div>
-                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'left')} style={{ position: 'absolute', top: 0, bottom: 0, left: '-4px', width: '8px', cursor: 'default', zIndex: 12 }}></div>
-                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'right')} style={{ position: 'absolute', top: 0, bottom: 0, right: '-4px', width: '8px', cursor: 'default', zIndex: 12 }}></div>
-                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'top-left')} style={{ position: 'absolute', top: '-4px', left: '-4px', width: '12px', height: '12px', cursor: 'default', zIndex: 13 }}></div>
-                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'top-right')} style={{ position: 'absolute', top: '-4px', right: '-4px', width: '12px', height: '12px', cursor: 'default', zIndex: 13 }}></div>
-                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'bottom-left')} style={{ position: 'absolute', bottom: '-4px', left: '-4px', width: '12px', height: '12px', cursor: 'default', zIndex: 13 }}></div>
-                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'bottom-right')} style={{ position: 'absolute', bottom: '-4px', right: '-4px', width: '12px', height: '12px', cursor: 'default', zIndex: 13 }}></div>
+                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'top')} style={{ position: 'absolute', top: '-4px', left: 0, right: 0, height: '8px', cursor: 'ns-resize', zIndex: 12 }}></div>
+                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'bottom')} style={{ position: 'absolute', bottom: '-4px', left: 0, right: 0, height: '8px', cursor: 'ns-resize', zIndex: 12 }}></div>
+                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'left')} style={{ position: 'absolute', top: 0, bottom: 0, left: '-4px', width: '8px', cursor: 'ew-resize', zIndex: 12 }}></div>
+                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'right')} style={{ position: 'absolute', top: 0, bottom: 0, right: '-4px', width: '8px', cursor: 'ew-resize', zIndex: 12 }}></div>
+                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'top-left')} style={{ position: 'absolute', top: '-4px', left: '-4px', width: '12px', height: '12px', cursor: 'nwse-resize', zIndex: 13 }}></div>
+                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'top-right')} style={{ position: 'absolute', top: '-4px', right: '-4px', width: '12px', height: '12px', cursor: 'nesw-resize', zIndex: 13 }}></div>
+                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'bottom-left')} style={{ position: 'absolute', bottom: '-4px', left: '-4px', width: '12px', height: '12px', cursor: 'nesw-resize', zIndex: 13 }}></div>
+                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'bottom-right')} style={{ position: 'absolute', bottom: '-4px', right: '-4px', width: '12px', height: '12px', cursor: 'nwse-resize', zIndex: 13 }}></div>
                 </>
             )}
 
