@@ -45,18 +45,21 @@ function SeismicExplorer() {
     const [desktopIcons, setDesktopIcons] = useState([]);
     const [recycledItems, setRecycledItems] = useState([]);
     const [showStartMenu, setShowStartMenu] = useState(false);
-    const [showRecycleBin, setShowRecycleBin] = useState(false);
     const [soundEnabled, setSoundEnabled] = useState(true);
     const [draggedIconId, setDraggedIconId] = useState(null);
     const [dragStartPos, setDragStartPos] = useState(null);
     const [iconPositions, setIconPositions] = useState({});
     
-    // Перенесено всередину компонента
+    // Стан для контекстних меню
     const [binMenu, setBinMenu] = useState({ visible: false, x: 0, y: 0 });
+    const [iconMenu, setIconMenu] = useState({ visible: false, x: 0, y: 0, project: null });
+    
     const desktopRef = useRef(null);
 
     const handleBinContextMenu = (e) => {
         e.preventDefault();
+        e.stopPropagation();
+        closeContextMenus();
         setBinMenu({
             visible: true,
             x: e.clientX,
@@ -64,8 +67,21 @@ function SeismicExplorer() {
         });
     };
 
-    const closeBinMenu = () => {
-        setBinMenu(prev => ({ ...prev, visible: false }));
+    const handleIconContextMenu = (e, project) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closeContextMenus();
+        setIconMenu({
+            visible: true,
+            x: e.clientX,
+            y: e.clientY,
+            project
+        });
+    };
+
+    const closeContextMenus = () => {
+        setBinMenu({ visible: false, x: 0, y: 0 });
+        setIconMenu({ visible: false, x: 0, y: 0, project: null });
     };
 
     // Load config
@@ -200,8 +216,7 @@ function SeismicExplorer() {
         });
     };
 
-    const deleteIcon = (projectId, e) => {
-        e.stopPropagation();
+    const deleteIcon = (projectId) => {
         playAudio('click');
         const icon = desktopIcons.find(i => i.id === projectId);
         if (icon) {
@@ -263,11 +278,6 @@ function SeismicExplorer() {
         openWindow(project);
     };
 
-    const handleContextMenu = (e, projectId) => {
-        e.preventDefault();
-        deleteIcon(projectId, e);
-    };
-
     if (!config) return <div style={{ color: 'white', padding: '20px' }}>Loading...</div>;
 
     return (
@@ -285,7 +295,7 @@ function SeismicExplorer() {
             onMouseLeave={handleMouseUp}
             onClick={() => {
                 setShowStartMenu(false);
-                closeBinMenu();
+                closeContextMenus();
             }}
         >
             {/* Desktop Icons */}
@@ -304,7 +314,7 @@ function SeismicExplorer() {
                         }}
                         onMouseDown={(e) => handleIconMouseDown(e, project.id)}
                         onDoubleClick={() => handleDoubleClick(project)}
-                        onContextMenu={(e) => handleContextMenu(e, project.id)}
+                        onContextMenu={(e) => handleIconContextMenu(e, project)}
                     >
                         <div className="icon-image">
                             <img src={project.logo} alt={project.name} style={{ pointerEvents: 'none' }} />
@@ -343,7 +353,7 @@ function SeismicExplorer() {
                     />
                 </div>
                 <div className="bin-label" style={{ fontSize: '12px', textAlign: 'center', marginTop: '4px', color: '#fff' }}>
-                    Recycle Bin ({recycledItems.length})
+                    Recycle Bin
                 </div>
             </div>
 
@@ -471,11 +481,77 @@ function SeismicExplorer() {
                 </div>
             )}
 
+            {/* Context Menu for Icons */}
+            {iconMenu.visible && iconMenu.project && (
+                <div 
+                    onClick={closeContextMenus}
+                    onContextMenu={(e) => { e.preventDefault(); closeContextMenus(); }}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100vw',
+                        height: '100vh',
+                        zIndex: 9998
+                    }}
+                >
+                    <div 
+                        style={{
+                            position: 'absolute',
+                            top: `${iconMenu.y}px`,
+                            left: `${iconMenu.x}px`,
+                            backgroundColor: '#c0c0c0',
+                            border: '2px solid',
+                            borderColor: '#ffffff #808080 #808080 #ffffff',
+                            boxShadow: '2px 2px 5px rgba(0,0,0,0.3)',
+                            padding: '2px',
+                            width: '120px',
+                            zIndex: 9999
+                        }}
+                    >
+                        <div 
+                            onClick={() => {
+                                openWindow(iconMenu.project);
+                                closeContextMenus();
+                            }}
+                            style={{
+                                padding: '4px 8px',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                fontWeight: 'bold',
+                                color: '#000'
+                            }}
+                            onMouseEnter={(e) => { e.target.style.backgroundColor = '#000080'; e.target.style.color = '#fff'; }}
+                            onMouseLeave={(e) => { e.target.style.backgroundColor = 'transparent'; e.target.style.color = '#000'; }}
+                        >
+                            Open
+                        </div>
+
+                        <div 
+                            onClick={() => {
+                                deleteIcon(iconMenu.project.id);
+                                closeContextMenus();
+                            }}
+                            style={{
+                                padding: '4px 8px',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                color: '#000'
+                            }}
+                            onMouseEnter={(e) => { e.target.style.backgroundColor = '#000080'; e.target.style.color = '#fff'; }}
+                            onMouseLeave={(e) => { e.target.style.backgroundColor = 'transparent'; e.target.style.color = '#000'; }}
+                        >
+                            Delete
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Context Menu for Recycle Bin */}
             {binMenu.visible && (
                 <div 
-                    onClick={closeBinMenu}
-                    onContextMenu={(e) => { e.preventDefault(); closeBinMenu(); }}
+                    onClick={closeContextMenus}
+                    onContextMenu={(e) => { e.preventDefault(); closeContextMenus(); }}
                     style={{
                         position: 'fixed',
                         top: 0,
@@ -507,7 +583,7 @@ function SeismicExplorer() {
                                     logo: recycledItems.length > 0 ? BIN_FULL : BIN_EMPTY,
                                     isRecycleBin: true
                                 });
-                                closeBinMenu();
+                                closeContextMenus();
                             }}
                             style={{
                                 padding: '4px 8px',
@@ -527,7 +603,7 @@ function SeismicExplorer() {
                                 if (recycledItems.length > 0 && window.confirm('Are you sure you want to permanently delete all items?')) {
                                     emptyRecycleBin();
                                 }
-                                closeBinMenu();
+                                closeContextMenus();
                             }}
                             style={{
                                 padding: '4px 8px',
