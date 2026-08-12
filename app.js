@@ -560,23 +560,23 @@ function Window({ window, onClose, onMinimize, onMaximize, recycledItems, onRest
                 </div>
             </div>
             <div className="window-content">
-                {isLoading && (
-                    <div className="loading-overlay">
-                        <div className="loading-bar">
-                            <div className="loading-progress"></div>
-                        </div>
-                        <div className="loading-text">Loading...</div>
-                    </div>
-                )}
-                <iframe
-                    className={`window-iframe ${isDragging ? 'iframe-dragging' : ''}`}
-                    src={window.project.url}
-                    title={window.project.name}
-                    onLoad={() => setIsLoading(false)}
-                    style={{ pointerEvents: isDragging ? 'none' : 'auto' }}
-                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-presentation"
-                />
+    {isLoading && (
+        <div className="loading-overlay">
+            <div className="loading-bar">
+                <div className="loading-progress"></div>
             </div>
+            <div className="loading-text">Loading...</div>
+        </div>
+    )}
+    <iframe
+        className={`window-iframe ${isDragging ? 'iframe-dragging' : ''}`}
+        src={window.project.url}
+        title={window.project.name}
+        onLoad={() => setIsLoading(false)}
+        style={{ pointerEvents: isDragging ? 'none' : 'auto' }}
+        sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-presentation"
+    />
+</div>
         </div>
     );
 }
