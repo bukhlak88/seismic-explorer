@@ -53,6 +53,9 @@ function SeismicExplorer() {
     // Стан для контекстних меню
     const [binMenu, setBinMenu] = useState({ visible: false, x: 0, y: 0 });
     const [iconMenu, setIconMenu] = useState({ visible: false, x: 0, y: 0, project: null });
+
+    // Стан для XP-діалогового вікна підтвердження
+    const [confirmModal, setConfirmModal] = useState({ visible: false, message: '', onConfirm: null });
     
     const desktopRef = useRef(null);
 
@@ -237,6 +240,17 @@ function SeismicExplorer() {
     const emptyRecycleBin = () => {
         playAudio('click');
         setRecycledItems([]);
+    };
+
+    const requestEmptyRecycleBin = () => {
+        if (!recycledItems || recycledItems.length === 0) return;
+        setConfirmModal({
+            visible: true,
+            message: 'Are you sure you want to permanently delete all items?',
+            onConfirm: () => {
+                emptyRecycleBin();
+            }
+        });
     };
 
     const handleIconMouseDown = (e, projectId) => {
@@ -470,9 +484,13 @@ function SeismicExplorer() {
                     <div 
                         className="start-menu-item"
                         onClick={() => {
-                            if (confirm('Are you sure you want to shut down?')) {
-                                alert('Thanks for using Seismic Explorer!');
-                            }
+                            setConfirmModal({
+                                visible: true,
+                                message: 'Are you sure you want to shut down?',
+                                onConfirm: () => {
+                                    alert('Thanks for using Seismic Explorer!');
+                                }
+                            });
                             setShowStartMenu(false);
                         }}
                     >
@@ -600,10 +618,8 @@ function SeismicExplorer() {
 
                         <div 
                             onClick={() => {
-                                if (recycledItems.length > 0 && window.confirm('Are you sure you want to permanently delete all items?')) {
-                                    emptyRecycleBin();
-                                }
                                 closeContextMenus();
+                                requestEmptyRecycleBin();
                             }}
                             style={{
                                 padding: '4px 8px',
@@ -628,6 +644,129 @@ function SeismicExplorer() {
                 </div>
             )}
 
+            {/* Custom Windows XP Confirm Modal */}
+            {confirmModal.visible && (
+                <div 
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100vw',
+                        height: '100vh',
+                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 100000
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div 
+                        style={{
+                            width: '360px',
+                            backgroundColor: '#ece9d8',
+                            border: '3px solid #0055ea',
+                            borderRadius: '5px 5px 0 0',
+                            boxShadow: '3px 3px 10px rgba(0,0,0,0.5)',
+                            fontFamily: 'Tahoma, sans-serif',
+                            overflow: 'hidden'
+                        }}
+                    >
+                        {/* Title bar */}
+                        <div 
+                            style={{
+                                background: 'linear-gradient(to right, #0058ee, #3a93ff)',
+                                color: '#ffffff',
+                                fontWeight: 'bold',
+                                padding: '3px 8px',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                fontSize: '12px'
+                            }}
+                        >
+                            <span>Confirm File Delete</span>
+                            <button 
+                                onClick={() => setConfirmModal({ visible: false, message: '', onConfirm: null })}
+                                style={{
+                                    background: '#d12e2e',
+                                    border: '1px solid #fff',
+                                    color: '#fff',
+                                    fontWeight: 'bold',
+                                    fontSize: '10px',
+                                    width: '16px',
+                                    height: '16px',
+                                    lineHeight: '14px',
+                                    cursor: 'pointer',
+                                    borderRadius: '2px',
+                                    padding: 0
+                                }}
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div style={{ padding: '15px 12px', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                            <div style={{ fontSize: '32px', lineHeight: '1' }}>❓</div>
+                            <div style={{ fontSize: '12px', color: '#000', wordBreak: 'break-word' }}>
+                                {confirmModal.message}
+                            </div>
+                        </div>
+
+                        {/* Buttons */}
+                        <div 
+                            style={{
+                                backgroundColor: '#f0f0e8',
+                                padding: '8px 12px',
+                                display: 'flex',
+                                justifyContent: 'flex-end',
+                                gap: '8px',
+                                borderTop: '1px solid #d0d0c0'
+                            }}
+                        >
+                            <button 
+                                onClick={() => {
+                                    playAudio('click');
+                                    if (confirmModal.onConfirm) confirmModal.onConfirm();
+                                    setConfirmModal({ visible: false, message: '', onConfirm: null });
+                                }}
+                                style={{
+                                    padding: '4px 18px',
+                                    fontSize: '12px',
+                                    fontFamily: 'Tahoma, sans-serif',
+                                    backgroundColor: '#ece9d8',
+                                    border: '1px solid #003c9d',
+                                    borderRadius: '3px',
+                                    cursor: 'pointer',
+                                    boxShadow: 'inset 0 1px 0 #fff'
+                                }}
+                            >
+                                Yes
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    playAudio('click');
+                                    setConfirmModal({ visible: false, message: '', onConfirm: null });
+                                }}
+                                style={{
+                                    padding: '4px 18px',
+                                    fontSize: '12px',
+                                    fontFamily: 'Tahoma, sans-serif',
+                                    backgroundColor: '#ece9d8',
+                                    border: '1px solid #707070',
+                                    borderRadius: '3px',
+                                    cursor: 'pointer',
+                                    boxShadow: 'inset 0 1px 0 #fff'
+                                }}
+                            >
+                                No
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Windows */}
             {Object.values(windows).map(window => (
                 !window.minimized && (
@@ -639,7 +778,7 @@ function SeismicExplorer() {
                         onMaximize={() => toggleMaximizeWindow(window.id)}
                         recycledItems={recycledItems}
                         onRestoreItem={restoreIcon}
-                        onEmptyBin={emptyRecycleBin}
+                        onEmptyBin={requestEmptyRecycleBin}
                     />
                 )
             ))}
