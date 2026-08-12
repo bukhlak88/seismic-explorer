@@ -96,7 +96,7 @@ function SeismicExplorer() {
         setIconMenu({ visible: false, x: 0, y: 0, project: null });
     };
 
-    // Load config (без збереження стану іконок/кошика в localStorage)
+    // Load config
     useEffect(() => {
         fetch('config.json')
             .then(r => r.json())
@@ -170,6 +170,13 @@ function SeismicExplorer() {
         }));
     };
 
+    const updateWindowGeometry = (windowId, newGeometry) => {
+        setWindows(prev => ({
+            ...prev,
+            [windowId]: { ...prev[windowId], ...newGeometry }
+        }));
+    };
+
     const toggleWindowTaskbar = (windowId) => {
         playAudio('click');
         setWindows(prev => {
@@ -238,7 +245,7 @@ function SeismicExplorer() {
                 Math.pow(e.clientY - dragStartPos.y, 2)
             );
             
-            if (distance > 10) {
+            if (distance > 5) {
                 const rect = desktopRef.current.getBoundingClientRect();
                 const x = Math.max(0, Math.min(e.clientX - rect.left - 40, window.innerWidth - 100));
                 const y = Math.max(0, Math.min(e.clientY - rect.top - 50, window.innerHeight - 150));
@@ -291,7 +298,7 @@ function SeismicExplorer() {
                             position: 'absolute',
                             left: `${pos.x}px`,
                             top: `${pos.y}px`,
-                            cursor: draggedIconId === project.id ? 'grabbing' : 'grab',
+                            cursor: 'default',
                             userSelect: 'none'
                         }}
                         onMouseDown={(e) => handleIconMouseDown(e, project.id)}
@@ -320,7 +327,7 @@ function SeismicExplorer() {
                     position: 'absolute',
                     bottom: '50px',
                     right: '20px',
-                    cursor: 'pointer', 
+                    cursor: 'default', 
                     userSelect: 'none',
                     display: 'flex',
                     flexDirection: 'column',
@@ -502,7 +509,7 @@ function SeismicExplorer() {
                             }}
                             style={{
                                 padding: '4px 8px',
-                                cursor: 'pointer',
+                                cursor: 'default',
                                 fontSize: '12px',
                                 fontWeight: 'bold',
                                 color: '#000'
@@ -520,7 +527,7 @@ function SeismicExplorer() {
                             }}
                             style={{
                                 padding: '4px 8px',
-                                cursor: 'pointer',
+                                cursor: 'default',
                                 fontSize: '12px',
                                 color: '#000'
                             }}
@@ -573,7 +580,7 @@ function SeismicExplorer() {
                             }}
                             style={{
                                 padding: '4px 8px',
-                                cursor: 'pointer',
+                                cursor: 'default',
                                 fontSize: '12px',
                                 fontWeight: 'bold',
                                 color: '#000'
@@ -591,7 +598,7 @@ function SeismicExplorer() {
                             }}
                             style={{
                                 padding: '4px 8px',
-                                cursor: recycledItems.length > 0 ? 'pointer' : 'default',
+                                cursor: 'default',
                                 fontSize: '12px',
                                 color: recycledItems.length > 0 ? '#000' : '#808080'
                             }}
@@ -665,7 +672,7 @@ function SeismicExplorer() {
                                     width: '16px',
                                     height: '16px',
                                     lineHeight: '14px',
-                                    cursor: 'pointer',
+                                    cursor: 'default',
                                     borderRadius: '2px',
                                     padding: 0
                                 }}
@@ -706,7 +713,7 @@ function SeismicExplorer() {
                                     backgroundColor: '#ece9d8',
                                     border: '1px solid #003c9d',
                                     borderRadius: '3px',
-                                    cursor: 'pointer',
+                                    cursor: 'default',
                                     boxShadow: 'inset 0 1px 0 #fff'
                                 }}
                             >
@@ -724,7 +731,7 @@ function SeismicExplorer() {
                                     backgroundColor: '#ece9d8',
                                     border: '1px solid #707070',
                                     borderRadius: '3px',
-                                    cursor: 'pointer',
+                                    cursor: 'default',
                                     boxShadow: 'inset 0 1px 0 #fff'
                                 }}
                             >
@@ -744,6 +751,7 @@ function SeismicExplorer() {
                         onClose={() => closeWindow(window.id)}
                         onMinimize={() => minimizeWindow(window.id)}
                         onMaximize={() => toggleMaximizeWindow(window.id)}
+                        onUpdateGeometry={(geom) => updateWindowGeometry(window.id, geom)}
                         recycledItems={recycledItems}
                         onRestoreItem={restoreIcon}
                         onEmptyBin={requestEmptyRecycleBin}
@@ -754,18 +762,36 @@ function SeismicExplorer() {
     );
 }
 
-function Window({ window, onClose, onMinimize, onMaximize, recycledItems, onRestoreItem, onEmptyBin }) {
+function Window({ window, onClose, onMinimize, onMaximize, onUpdateGeometry, recycledItems, onRestoreItem, onEmptyBin }) {
     const [isLoading, setIsLoading] = useState(true);
-    const [pos, setPos] = useState({ x: window.x, y: window.y });
     const [isDragging, setIsDragging] = useState(false);
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+    const [isResizing, setIsResizing] = useState(false);
+    const [resizeDirection, setResizeDirection] = useState(null);
+    const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, w: 0, h: 0, posX: 0, posY: 0 });
 
     const handleTitleMouseDown = (e) => {
         if (e.button !== 0 || window.maximized) return;
         setIsDragging(true);
         setDragOffset({
-            x: e.clientX - pos.x,
-            y: e.clientY - pos.y
+            x: e.clientX - window.x,
+            y: e.clientY - window.y
+        });
+    };
+
+    const handleResizeMouseDown = (e, direction) => {
+        if (e.button !== 0 || window.maximized) return;
+        e.stopPropagation();
+        setIsResizing(true);
+        setResizeDirection(direction);
+        setResizeStart({
+            x: e.clientX,
+            y: e.clientY,
+            w: window.width,
+            h: window.height,
+            posX: window.x,
+            posY: window.y
         });
     };
 
@@ -774,15 +800,47 @@ function Window({ window, onClose, onMinimize, onMaximize, recycledItems, onRest
             if (isDragging && !window.maximized) {
                 const newX = Math.max(0, e.clientX - dragOffset.x);
                 const newY = Math.max(0, e.clientY - dragOffset.y);
-                setPos({ x: newX, y: newY });
+                onUpdateGeometry({ x: newX, y: newY });
+            } else if (isResizing && !window.maximized) {
+                const dx = e.clientX - resizeStart.x;
+                const dy = e.clientY - resizeStart.y;
+                let newW = resizeStart.w;
+                let newH = resizeStart.h;
+                let newX = resizeStart.posX;
+                let newY = resizeStart.posY;
+
+                if (resizeDirection.includes('right')) {
+                    newW = Math.max(200, resizeStart.w + dx);
+                }
+                if (resizeDirection.includes('bottom')) {
+                    newH = Math.max(150, resizeStart.h + dy);
+                }
+                if (resizeDirection.includes('left')) {
+                    const potentialW = resizeStart.w - dx;
+                    if (potentialW >= 200) {
+                        newW = potentialW;
+                        newX = resizeStart.posX + dx;
+                    }
+                }
+                if (resizeDirection.includes('top')) {
+                    const potentialH = resizeStart.h - dy;
+                    if (potentialH >= 150) {
+                        newH = potentialH;
+                        newY = resizeStart.posY + dy;
+                    }
+                }
+
+                onUpdateGeometry({ x: newX, y: newY, width: newW, height: newH });
             }
         };
 
         const handleMouseUp = () => {
             setIsDragging(false);
+            setIsResizing(false);
+            setResizeDirection(null);
         };
 
-        if (isDragging) {
+        if (isDragging || isResizing) {
             document.addEventListener('mousemove', handleMouseMove);
             document.addEventListener('mouseup', handleMouseUp);
             return () => {
@@ -790,7 +848,7 @@ function Window({ window, onClose, onMinimize, onMaximize, recycledItems, onRest
                 document.removeEventListener('mouseup', handleMouseUp);
             };
         }
-    }, [isDragging, dragOffset, window.maximized]);
+    }, [isDragging, isResizing, dragOffset, resizeStart, resizeDirection, window.maximized, onUpdateGeometry]);
 
     const windowStyle = window.maximized ? {
         left: '0px',
@@ -799,19 +857,33 @@ function Window({ window, onClose, onMinimize, onMaximize, recycledItems, onRest
         height: 'calc(100vh - 38px)',
         zIndex: window.focused ? 11 : 10
     } : {
-        left: `${pos.x}px`,
-        top: `${pos.y}px`,
+        left: `${window.x}px`,
+        top: `${window.y}px`,
         width: `${window.width}px`,
         height: `${window.height}px`,
         zIndex: window.focused ? 11 : 10
     };
 
     return (
-        <div className="window" style={windowStyle}>
+        <div className="window" style={{ ...windowStyle, position: 'absolute', display: 'flex', flexDirection: 'column' }}>
+            {/* Ресайзери по краях та кутах */}
+            {!window.maximized && (
+                <>
+                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'top')} style={{ position: 'absolute', top: '-4px', left: 0, right: 0, height: '8px', cursor: 'default', zIndex: 12 }}></div>
+                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'bottom')} style={{ position: 'absolute', bottom: '-4px', left: 0, right: 0, height: '8px', cursor: 'default', zIndex: 12 }}></div>
+                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'left')} style={{ position: 'absolute', top: 0, bottom: 0, left: '-4px', width: '8px', cursor: 'default', zIndex: 12 }}></div>
+                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'right')} style={{ position: 'absolute', top: 0, bottom: 0, right: '-4px', width: '8px', cursor: 'default', zIndex: 12 }}></div>
+                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'top-left')} style={{ position: 'absolute', top: '-4px', left: '-4px', width: '12px', height: '12px', cursor: 'default', zIndex: 13 }}></div>
+                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'top-right')} style={{ position: 'absolute', top: '-4px', right: '-4px', width: '12px', height: '12px', cursor: 'default', zIndex: 13 }}></div>
+                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'bottom-left')} style={{ position: 'absolute', bottom: '-4px', left: '-4px', width: '12px', height: '12px', cursor: 'default', zIndex: 13 }}></div>
+                    <div onMouseDown={(e) => handleResizeMouseDown(e, 'bottom-right')} style={{ position: 'absolute', bottom: '-4px', right: '-4px', width: '12px', height: '12px', cursor: 'default', zIndex: 13 }}></div>
+                </>
+            )}
+
             <div 
                 className="window-title"
                 onMouseDown={handleTitleMouseDown}
-                style={{ cursor: window.maximized ? 'default' : (isDragging ? 'grabbing' : 'move'), userSelect: 'none' }}
+                style={{ cursor: 'default', userSelect: 'none' }}
             >
                 <span>{window.project.name}</span>
                 <div className="window-controls">
@@ -822,7 +894,7 @@ function Window({ window, onClose, onMinimize, onMaximize, recycledItems, onRest
                     <button className="window-btn" onClick={onClose} title="Close">✕</button>
                 </div>
             </div>
-            <div className="window-content" style={{ background: '#fff', height: 'calc(100% - 30px)', overflow: 'hidden' }}>
+            <div className="window-content" style={{ background: '#fff', flex: 1, overflow: 'hidden', position: 'relative' }}>
                 {window.project.isRecycleBin ? (
                     <div className="xp-explorer-container" style={{ display: 'flex', flexDirection: 'column', height: '100%', fontFamily: 'Tahoma, sans-serif', fontSize: '11px' }}>
                         <div className="xp-menu-bar" style={{ display: 'flex', gap: '12px', padding: '3px 6px', background: '#f0f0e8', borderBottom: '1px solid #d0d0c0' }}>
@@ -844,7 +916,7 @@ function Window({ window, onClose, onMinimize, onMaximize, recycledItems, onRest
                                         <button 
                                             onClick={onEmptyBin}
                                             disabled={!recycledItems || recycledItems.length === 0}
-                                            style={{ background: 'none', border: 'none', color: (recycledItems && recycledItems.length > 0) ? '#0066cc' : '#888', textAlign: 'left', cursor: 'pointer', fontSize: '11px', padding: 0 }}
+                                            style={{ background: 'none', border: 'none', color: (recycledItems && recycledItems.length > 0) ? '#0066cc' : '#888', textAlign: 'left', cursor: 'default', fontSize: '11px', padding: 0 }}
                                         >
                                             🗑️ Empty the Recycle Bin
                                         </button>
@@ -863,14 +935,14 @@ function Window({ window, onClose, onMinimize, onMaximize, recycledItems, onRest
                                         {recycledItems.map(item => (
                                             <div 
                                                 key={item.id} 
-                                                style={{ textAlign: 'center', width: '75px', cursor: 'pointer' }}
+                                                style={{ textAlign: 'center', width: '75px', cursor: 'default' }}
                                                 title="Right click or click Restore to return icon"
                                             >
                                                 <img src={item.logo} alt={item.name} style={{ width: '32px', height: '32px' }} />
                                                 <div style={{ fontSize: '11px', marginTop: '4px', wordBreak: 'break-word' }}>{item.name}</div>
                                                 <button 
                                                     onClick={() => onRestoreItem(item.id)}
-                                                    style={{ fontSize: '9px', marginTop: '4px', cursor: 'pointer' }}
+                                                    style={{ fontSize: '9px', marginTop: '4px', cursor: 'default' }}
                                                 >
                                                     Restore
                                                 </button>
@@ -892,11 +964,11 @@ function Window({ window, onClose, onMinimize, onMaximize, recycledItems, onRest
                             </div>
                         )}
                         <iframe
-                            className={`window-iframe ${isDragging ? 'iframe-dragging' : ''}`}
+                            className={`window-iframe ${(isDragging || isResizing) ? 'iframe-dragging' : ''}`}
                             src={window.project.url}
                             title={window.project.name}
                             onLoad={() => setIsLoading(false)}
-                            style={{ pointerEvents: isDragging ? 'none' : 'auto' }}
+                            style={{ width: '100%', height: '100%', border: 'none', pointerEvents: (isDragging || isResizing) ? 'none' : 'auto' }}
                             sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-presentation"
                         />
                     </>
