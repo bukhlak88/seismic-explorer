@@ -344,20 +344,27 @@ function SeismicExplorer() {
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="start-menu-item">
-                        🗂️ Programs
-                        <div className="submenu">
-                            {config.projects.map(p => (
-                                <div 
-                                    key={p.id}
-                                    className="submenu-item"
-                                    onClick={() => openWindow(p)}
-                                >
-                                    <img src={p.logo} alt={p.name} style={{ pointerEvents: 'none' }} />
-                                    {p.name}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+    🗂️ Programs
+    <div className="submenu">
+        {config.projects.map(p => (
+            <a 
+                key={p.id}
+                className="submenu-item"
+                href={p.twitter || p.url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                onClick={() => {
+                    playAudio('click');
+                    setShowStartMenu(false);
+                }}
+                style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+                <img src={p.logo} alt={p.name} style={{ pointerEvents: 'none', width: '16px', height: '16px' }} />
+                {p.name}
+            </a>
+        ))}
+    </div>
+</div>
 
                     <div className="start-menu-item separator"></div>
 
