@@ -1,3 +1,5 @@
+const BIN_EMPTY = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH5wgFCwoZ394+1AAAAM1JREFUeNrt10ENwCAQBEBygg/sYAVvByL4UA3spAftoAMsQ1ByCAnM493sL3M3s9slSRLg31mABViA/QK4xI1m3oA/5+3IAtS2G83sAnS1280uQI+92exsQLR3u9k/ACe7m30C8J2m3m4vAM/S1NvdLQDf1NvdMwAnO5q5AuA3Tf2eGgAtLdrdegAtLdrdagBNLdrdegB1m3q3Ww/A21v1dncfAAtLdrdeADvL6+1WAyza1NvdLYA2mno7C4A2mnpLBmBnfwEWYE133A+wL2M3p3xVtwAAAABJRU5Circle";
+const BIN_FULL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH5wgFCwoYyG+z2AAAANdJREFUeNrt10ENwCAQBEBqgo8VsII14E4EVE4s1EDO5A1aipCSk/1Y9y2zz813myRJAO8vCzAACzA1gI340/Qb8PrcHVmAsfWl2e0AtNpns9UAetitzf4CcI/tZnsF4BnbzR4A+Kdtt1sD4F2adru1ANyLbbdbC8AT2+3mB8C22Xazaw/AP2m65ro/AHbSdPecGgC3p2nvGQ4At2u653sC4KaO3e4eAK997J79AeCu2Xp7sQH4a9N2uysAdra23S0D4Gxr253mAHiaunXmXgC2i1y+jWb26QAAAABJRU5ErkJggg==";
 const { useState, useEffect, useRef } = React;
 
 const playSound = (type) => {
@@ -298,13 +300,17 @@ function SeismicExplorer() {
     onDoubleClick={() => openWindow({
         id: 'recycle-bin',
         name: 'Recycle Bin',
-        logo: 'assets/recycle-bin.png', // чи будь-яка ваша іконка
+        logo: recycledItems.length > 0 ? BIN_FULL : BIN_EMPTY,
         isRecycleBin: true
     })}
     style={{ cursor: 'pointer', userSelect: 'none' }}
 >
     <div className="bin-image">
-        <span style={{ fontSize: '40px' }}>{recycledItems.length > 0 ? '🗑️' : '🗑️'}</span>
+        <img 
+            src={recycledItems.length > 0 ? BIN_FULL : BIN_EMPTY} 
+            alt="Recycle Bin" 
+            style={{ width: '32px', height: '32px', pointerEvents: 'none' }} 
+        />
     </div>
     <div className="bin-label">Recycle Bin ({recycledItems.length})</div>
 </div>
