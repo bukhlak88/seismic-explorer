@@ -46,6 +46,7 @@ function SeismicExplorer() {
     const [showRecycleBin, setShowRecycleBin] = useState(false);
     const [soundEnabled, setSoundEnabled] = useState(true);
     const [draggedIconId, setDraggedIconId] = useState(null);
+    const [dragStartPos, setDragStartPos] = useState(null);
     const [iconPositions, setIconPositions] = useState({});
     const desktopRef = useRef(null);
 
@@ -106,20 +107,18 @@ function SeismicExplorer() {
         playAudio('open');
         const windowId = `window-${project.id}`;
         
-        const newWindow = {
-            id: windowId,
-            project,
-            x: Math.random() * 200 + 100,
-            y: Math.random() * 200 + 100,
-            width: 800,
-            height: 600,
-            minimized: false,
-            focused: true
-        };
-        
         setWindows(prev => ({
             ...prev,
-            [windowId]: newWindow
+            [windowId]: {
+                id: windowId,
+                project,
+                x: 100,
+                y: 100,
+                width: 900,
+                height: 600,
+                minimized: false,
+                focused: true
+            }
         }));
         setShowStartMenu(false);
     };
@@ -174,26 +173,35 @@ function SeismicExplorer() {
     };
 
     const handleIconMouseDown = (e, projectId) => {
-        if (e.button !== 0) return;
+        if (e.button !== 0 || e.detail === 2) return;
         e.preventDefault();
         setDraggedIconId(projectId);
+        setDragStartPos({ x: e.clientX, y: e.clientY });
     };
 
     const handleMouseMove = (e) => {
-        if (draggedIconId && desktopRef.current) {
-            const rect = desktopRef.current.getBoundingClientRect();
-            const x = Math.max(0, Math.min(e.clientX - rect.left - 40, window.innerWidth - 100));
-            const y = Math.max(0, Math.min(e.clientY - rect.top - 40, window.innerHeight - 100));
+        if (draggedIconId && dragStartPos && desktopRef.current) {
+            const distance = Math.sqrt(
+                Math.pow(e.clientX - dragStartPos.x, 2) + 
+                Math.pow(e.clientY - dragStartPos.y, 2)
+            );
             
-            setIconPositions(prev => ({
-                ...prev,
-                [draggedIconId]: { x, y }
-            }));
+            if (distance > 10) {
+                const rect = desktopRef.current.getBoundingClientRect();
+                const x = Math.max(0, Math.min(e.clientX - rect.left - 40, window.innerWidth - 100));
+                const y = Math.max(0, Math.min(e.clientY - rect.top - 50, window.innerHeight - 150));
+                
+                setIconPositions(prev => ({
+                    ...prev,
+                    [draggedIconId]: { x, y }
+                }));
+            }
         }
     };
 
     const handleMouseUp = () => {
         setDraggedIconId(null);
+        setDragStartPos(null);
     };
 
     const handleDoubleClick = (project) => {
@@ -232,16 +240,15 @@ function SeismicExplorer() {
                         style={{
                             left: `${pos.x}px`,
                             top: `${pos.y}px`,
-                            cursor: draggedIconId === project.id ? 'grabbing' : 'grab'
+                            cursor: draggedIconId === project.id ? 'grabbing' : 'grab',
+                            userSelect: 'none'
                         }}
                         onMouseDown={(e) => handleIconMouseDown(e, project.id)}
                         onDoubleClick={() => handleDoubleClick(project)}
                         onContextMenu={(e) => handleContextMenu(e, project.id)}
                     >
                         <div className="icon-image">
-                            <img src={project.logo} alt={project.name} onError={(e) => {
-                                e.target.style.display = 'none';
-                            }} />
+                            <img src={project.logo} alt={project.name} style={{ pointerEvents: 'none' }} />
                         </div>
                         <div className="icon-label">{project.name}</div>
                     </div>
@@ -252,7 +259,7 @@ function SeismicExplorer() {
             <div
                 className="recycle-bin"
                 onDoubleClick={() => setShowRecycleBin(true)}
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: 'pointer', userSelect: 'none' }}
             >
                 <div className="bin-image">
                     <span style={{ fontSize: '40px' }}>🗑️</span>
@@ -269,7 +276,7 @@ function SeismicExplorer() {
                         setShowStartMenu(!showStartMenu);
                     }}
                 >
-                    <img src={config.seismic.logo} alt="Seismic" />
+                    <img src={config.seismic.logo} alt="Seismic" style={{ pointerEvents: 'none' }} />
                     Start
                 </button>
 
@@ -282,7 +289,7 @@ function SeismicExplorer() {
                             className="taskbar-btn"
                             onClick={() => restoreWindow(w.id)}
                         >
-                            <img src={w.project.logo} alt={w.project.name} />
+                            <img src={w.project.logo} alt={w.project.name} style={{ pointerEvents: 'none' }} />
                             {w.project.name}
                         </button>
                     ))}
@@ -307,7 +314,7 @@ function SeismicExplorer() {
                                     className="submenu-item"
                                     onClick={() => openWindow(p)}
                                 >
-                                    <img src={p.logo} alt={p.name} />
+                                    <img src={p.logo} alt={p.name} style={{ pointerEvents: 'none' }} />
                                     {p.name}
                                 </div>
                             ))}
@@ -455,10 +462,9 @@ function Window({ window, onClose, onMinimize }) {
 
     const handleMouseMove = (e) => {
         if (isDragging) {
-            setPos({
-                x: e.clientX - dragOffset.x,
-                y: e.clientY - dragOffset.y
-            });
+            const newX = Math.max(0, e.clientX - dragOffset.x);
+            const newY = Math.max(0, e.clientY - dragOffset.y);
+            setPos({ x: newX, y: newY });
         }
     };
 
@@ -475,7 +481,7 @@ function Window({ window, onClose, onMinimize }) {
                 document.removeEventListener('mouseup', handleMouseUp);
             };
         }
-    }, [isDragging, dragOffset]);
+    }, [isDragging, dragOffset, pos]);
 
     return (
         <div
@@ -491,6 +497,7 @@ function Window({ window, onClose, onMinimize }) {
             <div 
                 className="window-title"
                 onMouseDown={handleTitleMouseDown}
+                style={{ cursor: isDragging ? 'grabbing' : 'move', userSelect: 'none' }}
             >
                 <span>{window.project.name}</span>
                 <div className="window-controls">
