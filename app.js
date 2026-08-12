@@ -52,37 +52,53 @@ function SeismicExplorer() {
 
     // Load config
     useEffect(() => {
-        fetch('config.json')
-            .then(r => r.json())
-            .then(data => {
-                setConfig(data);
-                const stored = localStorage.getItem('desktopIcons');
-                const storedPositions = localStorage.getItem('iconPositions');
-                
-                if (stored) {
-                    try {
-                        setDesktopIcons(JSON.parse(stored));
-                    } catch(e) {
-                        setDesktopIcons(data.projects);
-                    }
-                } else {
-                    setDesktopIcons(data.projects);
-                }
-                
-                if (storedPositions) {
-                    try {
-                        setIconPositions(JSON.parse(storedPositions));
-                    } catch(e) {}
-                }
-                
-                const storedRecycled = localStorage.getItem('recycledItems');
-                if (storedRecycled) {
-                    try {
-                        setRecycledItems(JSON.parse(storedRecycled));
-                    } catch(e) {}
+    fetch('config.json')
+        .then(r => r.json())
+        .then(data => {
+            setConfig(data);
+            
+            const storedIcons = localStorage.getItem('desktopIcons');
+            const storedPositions = localStorage.getItem('iconPositions');
+            
+            let initialIcons = data.projects;
+            if (storedIcons) {
+                try {
+                    initialIcons = JSON.parse(storedIcons);
+                } catch(e) {}
+            }
+            setDesktopIcons(initialIcons);
+
+            let initialPositions = {};
+            if (storedPositions) {
+                try {
+                    initialPositions = JSON.parse(storedPositions);
+                } catch(e) {}
+            }
+
+            // Генеруємо фіксовані позиції за сіткою для нових іконок
+            const updatedPositions = { ...initialPositions };
+            initialIcons.forEach((project, index) => {
+                if (!updatedPositions[project.id]) {
+                    // Сітка: колони по 100px, рядки по 100px
+                    const col = Math.floor(index / 5);
+                    const row = index % 5;
+                    updatedPositions[project.id] = {
+                        x: 20 + col * 100,
+                        y: 20 + row * 100
+                    };
                 }
             });
-    }, []);
+
+            setIconPositions(updatedPositions);
+
+            const storedRecycled = localStorage.getItem('recycledItems');
+            if (storedRecycled) {
+                try {
+                    setRecycledItems(JSON.parse(storedRecycled));
+                } catch(e) {}
+            }
+        });
+}, []);
 
     // Save state
     useEffect(() => {
@@ -200,9 +216,13 @@ function SeismicExplorer() {
     };
 
     const handleMouseUp = () => {
-        setDraggedIconId(null);
-        setDragStartPos(null);
-    };
+    if (draggedIconId) {
+        // Гарантуємо збереження поточної позиції при відпусканні
+        setIconPositions(prev => ({ ...prev }));
+    }
+    setDraggedIconId(null);
+    setDragStartPos(null);
+};
 
     const handleDoubleClick = (project) => {
         openWindow(project);
