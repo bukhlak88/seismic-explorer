@@ -366,7 +366,7 @@ function SeismicExplorer() {
                                         id: 'seismic-about',
                                         name: 'About Seismic',
                                         logo: config.seismic.logo,
-                                        url: config.seismic.docs || config.seismic.url || 'https://seismic.systems'
+                                        url: config.seismic.url || config.seismic.docs || 'https://seismic.systems'
                                     });
                                 }}
                             >
