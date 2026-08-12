@@ -89,8 +89,7 @@ body {
     width: auto;
     object-fit: contain;
     pointer-events: none;
-    /* Перетворює будь-який колір всередині SVG на чистий чорний/темний */
-    filter: brightness(0); 
+    /* Перетворює будь-який колір всередині SVG на чистий чорний/темний */ 
 }
 
 .start-button .start-logo {
