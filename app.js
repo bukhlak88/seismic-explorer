@@ -473,17 +473,20 @@ function SeismicExplorer() {
             )}
 
             {/* Windows */}
-            {Object.values(windows).map(window => (
-                !window.minimized && (
-                    <Window 
-                        key={window.id}
-                        window={window}
-                        onClose={() => closeWindow(window.id)}
-                        onMinimize={() => minimizeWindow(window.id)}
-                        onMaximize={() => toggleMaximizeWindow(window.id)}
-                    />
-                )
-            ))}
+{Object.values(windows).map(window => (
+    !window.minimized && (
+        <Window 
+            key={window.id}
+            window={window}
+            onClose={() => closeWindow(window.id)}
+            onMinimize={() => minimizeWindow(window.id)}
+            onMaximize={() => toggleMaximizeWindow(window.id)}
+            recycledItems={recycledItems}
+            onRestoreItem={restoreIcon}
+            onEmptyBin={emptyRecycleBin}
+        />
+    )
+))}
         </div>
     );
 }
