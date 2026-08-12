@@ -491,7 +491,7 @@ function SeismicExplorer() {
     );
 }
 
-function Window({ window, onClose, onMinimize, onMaximize }) {
+function Window({ window, onClose, onMinimize, onMaximize, recycledItems, onRestoreItem, onEmptyBin }) {
     const [isLoading, setIsLoading] = useState(true);
     const [pos, setPos] = useState({ x: window.x, y: window.y });
     const [isDragging, setIsDragging] = useState(false);
