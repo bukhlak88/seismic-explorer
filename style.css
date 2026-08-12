@@ -84,12 +84,17 @@ body {
     z-index: 100;
 }
 
-.start-button .start-logo {
-    height: 18px;
-    width: auto;
-    object-fit: contain;
-    pointer-events: none;
-    /* Перетворює будь-який колір всередині SVG на чистий чорний/темний */ 
+/* ОСЬ ЦЕЙ НОВИЙ БЛОК ДЛЯ КНОПКИ */
+.start-button {
+    background: transparent; /* прибирає білий фон (робить прозорим під таскбар) */
+    border: 2px outset #dfdfdf;
+    border-right-color: #808080;
+    border-bottom-color: #808080;
+    padding: 2px 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
 }
 
 .start-button .start-logo {
