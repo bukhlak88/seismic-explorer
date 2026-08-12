@@ -472,3 +472,6 @@ body {
     border-style: inset;
     border-color: #808080 #dfdfdf #dfdfdf #808080;
 }
+.iframe-dragging {
+    pointer-events: none !important;
+}
