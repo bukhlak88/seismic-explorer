@@ -559,23 +559,89 @@ function Window({ window, onClose, onMinimize, onMaximize, recycledItems, onRest
                     <button className="window-btn" onClick={onClose} title="Close">✕</button>
                 </div>
             </div>
-            <div className="window-content">
-    {isLoading && (
-        <div className="loading-overlay">
-            <div className="loading-bar">
-                <div className="loading-progress"></div>
+            <div className="window-content" style={{ background: '#fff', height: 'calc(100% - 30px)', overflow: 'hidden' }}>
+    {window.project.isRecycleBin ? (
+        /* Вміст для Кошика у стилі Windows XP */
+        <div className="xp-explorer-container" style={{ display: 'flex', flexDirection: 'column', height: '100%', fontFamily: 'Tahoma, sans-serif', fontSize: '11px' }}>
+            <div className="xp-menu-bar" style={{ display: 'flex', gap: '12px', padding: '3px 6px', background: '#f0f0e8', borderBottom: '1px solid #d0d0c0' }}>
+                <span>File</span>
+                <span>Edit</span>
+                <span>View</span>
+                <span>Favorites</span>
+                <span>Tools</span>
+                <span>Help</span>
             </div>
-            <div className="loading-text">Loading...</div>
+
+            <div className="xp-explorer-body" style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+                {/* Лівий боковий панель XP */}
+                <div className="xp-sidebar" style={{ width: '180px', background: 'linear-gradient(to bottom, #7ba2e7, #6375d6)', padding: '8px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ background: '#fff', borderRadius: '3px', overflow: 'hidden' }}>
+                        <div style={{ background: 'linear-gradient(to right, #225ad2, #648ee4)', color: 'white', fontWeight: 'bold', padding: '4px 8px' }}>
+                            Recycle Bin Tasks
+                        </div>
+                        <div style={{ background: '#d6dff7', padding: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            <button 
+                                onClick={onEmptyBin}
+                                disabled={!recycledItems || recycledItems.length === 0}
+                                style={{ background: 'none', border: 'none', color: (recycledItems && recycledItems.length > 0) ? '#0066cc' : '#888', textAlign: 'left', cursor: 'pointer', fontSize: '11px', padding: 0 }}
+                            >
+                                🗑️ Empty the Recycle Bin
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Поле з видаленими елементами */}
+                <div className="xp-file-area" style={{ flex: 1, background: '#ffffff', padding: '15px', overflowY: 'auto' }}>
+                    {(!recycledItems || recycledItems.length === 0) ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: '40px', color: '#666' }}>
+                            <span style={{ fontSize: '48px', marginBottom: '10px' }}>🗑️</span>
+                            <p>The Recycle Bin is empty.</p>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                            {recycledItems.map(item => (
+                                <div 
+                                    key={item.id} 
+                                    style={{ textAlign: 'center', width: '75px', cursor: 'pointer' }}
+                                    title="Right click or click Restore to return icon"
+                                >
+                                    <img src={item.logo} alt={item.name} style={{ width: '32px', height: '32px' }} />
+                                    <div style={{ fontSize: '11px', marginTop: '4px', wordBreak: 'break-word' }}>{item.name}</div>
+                                    <button 
+                                        onClick={() => onRestoreItem(item.id)}
+                                        style={{ fontSize: '9px', marginTop: '4px', cursor: 'pointer' }}
+                                    >
+                                        Restore
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
+    ) : (
+        /* Звичайний iframe для інших вікон */
+        <>
+            {isLoading && (
+                <div className="loading-overlay">
+                    <div className="loading-bar">
+                        <div className="loading-progress"></div>
+                    </div>
+                    <div className="loading-text">Loading...</div>
+                </div>
+            )}
+            <iframe
+                className={`window-iframe ${isDragging ? 'iframe-dragging' : ''}`}
+                src={window.project.url}
+                title={window.project.name}
+                onLoad={() => setIsLoading(false)}
+                style={{ pointerEvents: isDragging ? 'none' : 'auto' }}
+                sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-presentation"
+            />
+        </>
     )}
-    <iframe
-        className={`window-iframe ${isDragging ? 'iframe-dragging' : ''}`}
-        src={window.project.url}
-        title={window.project.name}
-        onLoad={() => setIsLoading(false)}
-        style={{ pointerEvents: isDragging ? 'none' : 'auto' }}
-        sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-presentation"
-    />
 </div>
         </div>
     );
