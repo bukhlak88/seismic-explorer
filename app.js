@@ -49,6 +49,7 @@ function SeismicExplorer() {
     const [draggedIconId, setDraggedIconId] = useState(null);
     const [dragStartPos, setDragStartPos] = useState(null);
     const [iconPositions, setIconPositions] = useState({});
+    const [highestZIndex, setHighestZIndex] = useState(20);
     
     // Стан для контекстних меню
     const [binMenu, setBinMenu] = useState({ visible: false, x: 0, y: 0 });
@@ -125,32 +126,45 @@ function SeismicExplorer() {
         if (soundEnabled) playSound(type);
     };
 
+    const focusWindow = (windowId) => {
+        setHighestZIndex(prev => {
+            const nextZ = prev + 1;
+            setWindows(winPrev => {
+                if (!winPrev[windowId]) return winPrev;
+                return {
+                    ...winPrev,
+                    [windowId]: { ...winPrev[windowId], minimized: false, focused: true, zIndex: nextZ }
+                };
+            });
+            return nextZ;
+        });
+    };
+
     const openWindow = (project) => {
         playAudio('open');
         const windowId = `window-${project.id}`;
         
         setWindows(prev => {
             if (prev[windowId]) {
-                // Якщо вікно вже існувало, просто розгортаємо його та робимо активним
-                return {
-                    ...prev,
-                    [windowId]: { ...prev[windowId], minimized: false, focused: true }
-                };
+                return prev;
             }
             return {
                 ...prev,
                 [windowId]: {
                     id: windowId,
                     project,
-                    x: 100,
-                    y: 100,
+                    x: 100 + (Object.keys(prev).length * 20),
+                    y: 100 + (Object.keys(prev).length * 20),
                     width: 900,
                     height: 600,
                     minimized: false,
-                    focused: true
+                    focused: true,
+                    zIndex: highestZIndex + 1
                 }
             };
         });
+        
+        focusWindow(windowId);
         setShowStartMenu(false);
     };
 
@@ -167,12 +181,13 @@ function SeismicExplorer() {
         playAudio('click');
         setWindows(prev => ({
             ...prev,
-            [windowId]: { ...prev[windowId], minimized: true }
+            [windowId]: { ...prev[windowId], minimized: true, focused: false }
         }));
     };
 
     const toggleMaximizeWindow = (windowId) => {
         playAudio('click');
+        focusWindow(windowId);
         setWindows(prev => ({
             ...prev,
             [windowId]: { ...prev[windowId], maximized: !prev[windowId].maximized }
@@ -188,22 +203,17 @@ function SeismicExplorer() {
 
     const toggleWindowTaskbar = (windowId) => {
         playAudio('click');
-        setWindows(prev => {
-            const currentWin = prev[windowId];
-            if (!currentWin) return prev;
+        const currentWin = windows[windowId];
+        if (!currentWin) return;
 
-            if (currentWin.minimized) {
-                return {
-                    ...prev,
-                    [windowId]: { ...prev[windowId], minimized: false, focused: true }
-                };
-            } else {
-                return {
-                    ...prev,
-                    [windowId]: { ...prev[windowId], minimized: true }
-                };
-            }
-        });
+        if (currentWin.minimized || !currentWin.focused) {
+            focusWindow(windowId);
+        } else {
+            setWindows(prev => ({
+                ...prev,
+                [windowId]: { ...prev[windowId], minimized: true, focused: false }
+            }));
+        }
     };
 
     const deleteIcon = (projectId) => {
@@ -373,7 +383,7 @@ function SeismicExplorer() {
                     {Object.values(windows).map(w => (
                         <button
                             key={w.id}
-                            className={`taskbar-btn ${!w.minimized ? 'active' : ''}`}
+                            className={`taskbar-btn ${!w.minimized && w.focused ? 'active' : ''}`}
                             onClick={() => toggleWindowTaskbar(w.id)}
                         >
                             <img src={w.project.logo} alt={w.project.name} style={{ pointerEvents: 'none' }} />
@@ -751,7 +761,7 @@ function SeismicExplorer() {
                 </div>
             )}
 
-            {/* Windows (рендеримо всі створені вікна, але приховуємо згорнуті через display: none) */}
+            {/* Windows */}
             {Object.values(windows).map(window => (
                 <Window 
                     key={window.id}
@@ -760,6 +770,7 @@ function SeismicExplorer() {
                     onMinimize={() => minimizeWindow(window.id)}
                     onMaximize={() => toggleMaximizeWindow(window.id)}
                     onUpdateGeometry={(geom) => updateWindowGeometry(window.id, geom)}
+                    onFocus={() => focusWindow(window.id)}
                     recycledItems={recycledItems}
                     onRestoreItem={restoreIcon}
                     onEmptyBin={requestEmptyRecycleBin}
@@ -769,7 +780,7 @@ function SeismicExplorer() {
     );
 }
 
-function Window({ window, onClose, onMinimize, onMaximize, onUpdateGeometry, recycledItems, onRestoreItem, onEmptyBin }) {
+function Window({ window, onClose, onMinimize, onMaximize, onUpdateGeometry, onFocus, recycledItems, onRestoreItem, onEmptyBin }) {
     const [isLoading, setIsLoading] = useState(true);
     const [isDragging, setIsDragging] = useState(false);
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -779,7 +790,9 @@ function Window({ window, onClose, onMinimize, onMaximize, onUpdateGeometry, rec
     const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, w: 0, h: 0, posX: 0, posY: 0 });
 
     const handleTitleMouseDown = (e) => {
-        if (e.button !== 0 || window.maximized) return;
+        if (e.button !== 0) return;
+        onFocus();
+        if (window.maximized) return;
         setIsDragging(true);
         setDragOffset({
             x: e.clientX - window.x,
@@ -790,6 +803,7 @@ function Window({ window, onClose, onMinimize, onMaximize, onUpdateGeometry, rec
     const handleResizeMouseDown = (e, direction) => {
         if (e.button !== 0 || window.maximized) return;
         e.stopPropagation();
+        onFocus();
         setIsResizing(true);
         setResizeDirection(direction);
         setResizeStart({
@@ -862,19 +876,23 @@ function Window({ window, onClose, onMinimize, onMaximize, onUpdateGeometry, rec
         top: '0px',
         width: '100vw',
         height: 'calc(100vh - 38px)',
-        zIndex: window.focused ? 11 : 10,
+        zIndex: window.zIndex || 10,
         display: window.minimized ? 'none' : 'flex'
     } : {
         left: `${window.x}px`,
         top: `${window.y}px`,
         width: `${window.width}px`,
         height: `${window.height}px`,
-        zIndex: window.focused ? 11 : 10,
+        zIndex: window.zIndex || 10,
         display: window.minimized ? 'none' : 'flex'
     };
 
     return (
-        <div className="window" style={{ ...windowStyle, position: 'absolute', flexDirection: 'column' }}>
+        <div 
+            className="window" 
+            onMouseDown={onFocus}
+            style={{ ...windowStyle, position: 'absolute', flexDirection: 'column' }}
+        >
             {/* Ресайзери з класичними XP курсорами */}
             {!window.maximized && (
                 <>
