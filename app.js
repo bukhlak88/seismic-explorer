@@ -155,14 +155,34 @@ function SeismicExplorer() {
             [windowId]: { ...prev[windowId], minimized: true }
         }));
     };
+const toggleMaximizeWindow = (windowId) => {
+    playAudio('click');
+    setWindows(prev => ({
+        ...prev,
+        [windowId]: { ...prev[windowId], maximized: !prev[windowId].maximized }
+    }));
+};
+    const toggleWindowTaskbar = (windowId) => {
+    playAudio('click');
+    setWindows(prev => {
+        const currentWin = prev[windowId];
+        if (!currentWin) return prev;
 
-    const restoreWindow = (windowId) => {
-        playAudio('click');
-        setWindows(prev => ({
-            ...prev,
-            [windowId]: { ...prev[windowId], minimized: false, focused: true }
-        }));
-    };
+        // Якщо згорнуте — відновлюємо
+        if (currentWin.minimized) {
+            return {
+                ...prev,
+                [windowId]: { ...prev[windowId], minimized: false, focused: true }
+            };
+        } else {
+            // Якщо вже відкрите — згортаємо
+            return {
+                ...prev,
+                [windowId]: { ...prev[windowId], minimized: true }
+            };
+        }
+    });
+};
 
     const deleteIcon = (projectId, e) => {
         e.stopPropagation();
@@ -303,17 +323,17 @@ function SeismicExplorer() {
                 <div className="taskbar-separator"></div>
 
                 <div className="taskbar-buttons">
-                    {Object.values(windows).filter(w => !w.minimized).map(w => (
-                        <button
-                            key={w.id}
-                            className="taskbar-btn"
-                            onClick={() => restoreWindow(w.id)}
-                        >
-                            <img src={w.project.logo} alt={w.project.name} style={{ pointerEvents: 'none' }} />
-                            {w.project.name}
-                        </button>
-                    ))}
-                </div>
+    {Object.values(windows).map(w => (
+        <button
+            key={w.id}
+            className={`taskbar-btn ${!w.minimized ? 'active' : ''}`}
+            onClick={() => toggleWindowTaskbar(w.id)}
+        >
+            <img src={w.project.logo} alt={w.project.name} style={{ pointerEvents: 'none' }} />
+            {w.project.name}
+        </button>
+    ))}
+</div>
             </div>
 
             {/* Start Menu */}
@@ -458,6 +478,7 @@ function SeismicExplorer() {
                         window={window}
                         onClose={() => closeWindow(window.id)}
                         onMinimize={() => minimizeWindow(window.id)}
+                        onMaximize={() => toggleMaximizeWindow(window.id)}
                     />
                 )
             ))}
@@ -465,14 +486,14 @@ function SeismicExplorer() {
     );
 }
 
-function Window({ window, onClose, onMinimize }) {
+function Window({ window, onClose, onMinimize, onMaximize }) {
     const [isLoading, setIsLoading] = useState(true);
     const [pos, setPos] = useState({ x: window.x, y: window.y });
     const [isDragging, setIsDragging] = useState(false);
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
     const handleTitleMouseDown = (e) => {
-        if (e.button !== 0) return;
+        if (e.button !== 0 || window.maximized) return; // Забороняємо перетягувати, якщо розгорнуто на весь екран
         setIsDragging(true);
         setDragOffset({
             x: e.clientX - pos.x,
@@ -481,7 +502,7 @@ function Window({ window, onClose, onMinimize }) {
     };
 
     const handleMouseMove = (e) => {
-        if (isDragging) {
+        if (isDragging && !window.maximized) {
             const newX = Math.max(0, e.clientX - dragOffset.x);
             const newY = Math.max(0, e.clientY - dragOffset.y);
             setPos({ x: newX, y: newY });
@@ -503,26 +524,35 @@ function Window({ window, onClose, onMinimize }) {
         }
     }, [isDragging, dragOffset, pos]);
 
+    // Стилі для звичайного та розгорнутого стану
+    const windowStyle = window.maximized ? {
+        left: '0px',
+        top: '0px',
+        width: '100vw',
+        height: 'calc(100vh - 38px)', // Залишаємо місце під Taskbar
+        zIndex: window.focused ? 11 : 10
+    } : {
+        left: `${pos.x}px`,
+        top: `${pos.y}px`,
+        width: `${window.width}px`,
+        height: `${window.height}px`,
+        zIndex: window.focused ? 11 : 10
+    };
+
     return (
-        <div
-            className="window"
-            style={{
-                left: `${pos.x}px`,
-                top: `${pos.y}px`,
-                width: `${window.width}px`,
-                height: `${window.height}px`,
-                zIndex: window.focused ? 11 : 10
-            }}
-        >
+        <div className="window" style={windowStyle}>
             <div 
                 className="window-title"
                 onMouseDown={handleTitleMouseDown}
-                style={{ cursor: isDragging ? 'grabbing' : 'move', userSelect: 'none' }}
+                style={{ cursor: window.maximized ? 'default' : (isDragging ? 'grabbing' : 'move'), userSelect: 'none' }}
             >
                 <span>{window.project.name}</span>
                 <div className="window-controls">
-                    <button className="window-btn" onClick={onMinimize}>_</button>
-                    <button className="window-btn" onClick={onClose}>✕</button>
+                    <button className="window-btn" onClick={onMinimize} title="Minimize">_</button>
+                    <button className="window-btn" onClick={onMaximize} title="Maximize">
+                        {window.maximized ? '🗗' : '🗖'}
+                    </button>
+                    <button className="window-btn" onClick={onClose} title="Close">✕</button>
                 </div>
             </div>
             <div className="window-content">
