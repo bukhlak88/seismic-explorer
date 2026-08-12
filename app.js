@@ -303,16 +303,25 @@ function SeismicExplorer() {
         logo: recycledItems.length > 0 ? BIN_FULL : BIN_EMPTY,
         isRecycleBin: true
     })}
-    style={{ cursor: 'pointer', userSelect: 'none' }}
+    style={{ 
+        cursor: 'pointer', 
+        userSelect: 'none',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        marginBottom: '15px' // піднімає іконку над панеллю завдань
+    }}
 >
     <div className="bin-image">
         <img 
             src={recycledItems.length > 0 ? BIN_FULL : BIN_EMPTY} 
             alt="Recycle Bin" 
-            style={{ width: '32px', height: '32px', pointerEvents: 'none' }} 
+            style={{ width: '48px', height: '48px', pointerEvents: 'none', objectFit: 'contain' }} 
         />
     </div>
-    <div className="bin-label">Recycle Bin ({recycledItems.length})</div>
+    <div className="bin-label" style={{ fontSize: '12px', textAlign: 'center', marginTop: '4px' }}>
+        Recycle Bin ({recycledItems.length})
+    </div>
 </div>
 
             {/* Taskbar */}
