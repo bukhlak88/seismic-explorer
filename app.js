@@ -427,6 +427,7 @@ const toggleMaximizeWindow = (windowId) => {
             🔌 Shut Down...
         </div>
     </div>
+</div>
 )}
 
             {/* Recycle Bin Modal */}
