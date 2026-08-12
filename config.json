@@ -1,0 +1,115 @@
+{
+  "projects": [
+    {
+      "id": "avvio",
+      "name": "Avvio",
+      "url": "https://avvio.xyz/",
+      "logo": "assets/logos/Avvio.jpg",
+      "twitter": "https://x.com/tryavvio"
+    },
+    {
+      "id": "blend",
+      "name": "Blend",
+      "url": "https://blend.money/",
+      "logo": "assets/logos/Blend.jpg",
+      "twitter": "https://x.com/blend_money"
+    },
+    {
+      "id": "brookwell",
+      "name": "Brookwell",
+      "url": "https://www.brookwell.com/",
+      "logo": "assets/logos/Brookwell.jpg",
+      "twitter": "https://x.com/brookwellapp"
+    },
+    {
+      "id": "cred",
+      "name": "Cred Protocol",
+      "url": "https://credprotocol.com/",
+      "logo": "assets/logos/Cred_Protocol.jpg",
+      "twitter": "https://x.com/cred_protocol"
+    },
+    {
+      "id": "dashx",
+      "name": "DashX",
+      "url": "https://dashx.xyz/",
+      "logo": "assets/logos/DashX.jpg",
+      "twitter": "https://x.com/DashXHQ"
+    },
+    {
+      "id": "pagga",
+      "name": "Pagga",
+      "url": "https://pagga.io/",
+      "logo": "assets/logos/Pagga.jpg",
+      "twitter": "https://x.com/paggaapp"
+    },
+    {
+      "id": "port",
+      "name": "Port Markets",
+      "url": "https://www.portmarkets.com/",
+      "logo": "assets/logos/Port_Markets.jpg",
+      "twitter": "https://x.com/portmarkets"
+    },
+    {
+      "id": "prism",
+      "name": "Prism",
+      "url": "https://getprism.money/",
+      "logo": "assets/logos/Prism.jpg",
+      "twitter": "https://x.com/getprism_money"
+    },
+    {
+      "id": "promis",
+      "name": "Promis",
+      "url": "https://www.promis.fi/index.html",
+      "logo": "assets/logos/Promis.jpg",
+      "twitter": "https://x.com/PromisFi"
+    },
+    {
+      "id": "reah",
+      "name": "Reah",
+      "url": "https://www.reah.com/",
+      "logo": "assets/logos/Reah.jpg",
+      "twitter": "https://x.com/ReahPlatform"
+    },
+    {
+      "id": "sedona",
+      "name": "Sedona",
+      "url": "https://sedona.fi/",
+      "logo": "assets/logos/Sedona.jpg",
+      "twitter": "https://x.com/SedonaFi"
+    },
+    {
+      "id": "shift",
+      "name": "SHIFT",
+      "url": "https://www.shift-apply.com/",
+      "logo": "assets/logos/Shift.jpg",
+      "twitter": "https://x.com/ShiftApply"
+    },
+    {
+      "id": "specie",
+      "name": "Specie",
+      "url": "https://www.specie.finance/",
+      "logo": "assets/logos/Specie.jpg",
+      "twitter": "https://x.com/speciefinance"
+    },
+    {
+      "id": "vend",
+      "name": "Vend",
+      "url": "https://vend.money/",
+      "logo": "assets/logos/Vend.jpg",
+      "twitter": "https://x.com/vend_money"
+    },
+    {
+      "id": "via",
+      "name": "VIA",
+      "url": "https://www.via.xyz/",
+      "logo": "assets/logos/VIA.jpg",
+      "twitter": "https://x.com/via4biz"
+    }
+  ],
+  "seismic": {
+    "logo": "assets/seismic-logo.png",
+    "docs": "https://docs.seismic.systems/",
+    "discord": "https://discord.com/invite/seismic",
+    "twitter": "https://x.com/SeismicSys"
+  }
+}
