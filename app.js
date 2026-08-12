@@ -232,7 +232,7 @@ function SeismicExplorer() {
         >
             {/* Desktop Icons */}
             {desktopIcons.map(project => {
-                const pos = iconPositions[project.id] || { x: Math.random() * 600, y: Math.random() * 400 };
+                const pos = iconPositions[project.id] || { x: 20, y: 20 };
                 return (
                     <div
                         key={project.id}
