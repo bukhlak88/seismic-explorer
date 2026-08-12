@@ -52,53 +52,51 @@ function SeismicExplorer() {
 
     // Load config
     useEffect(() => {
-    fetch('config.json')
-        .then(r => r.json())
-        .then(data => {
-            setConfig(data);
-            
-            const storedIcons = localStorage.getItem('desktopIcons');
-            const storedPositions = localStorage.getItem('iconPositions');
-            
-            let initialIcons = data.projects;
-            if (storedIcons) {
-                try {
-                    initialIcons = JSON.parse(storedIcons);
-                } catch(e) {}
-            }
-            setDesktopIcons(initialIcons);
+        fetch('config.json')
+            .then(r => r.json())
+            .then(data => {
+                setConfig(data);
+                
+                const storedIcons = localStorage.getItem('desktopIcons');
+                const storedPositions = localStorage.getItem('iconPositions');
+                
+                let initialIcons = data.projects;
+                if (storedIcons) {
+                    try {
+                        initialIcons = JSON.parse(storedIcons);
+                    } catch(e) {}
+                }
+                setDesktopIcons(initialIcons);
 
-            let initialPositions = {};
-            if (storedPositions) {
-                try {
-                    initialPositions = JSON.parse(storedPositions);
-                } catch(e) {}
-            }
+                let initialPositions = {};
+                if (storedPositions) {
+                    try {
+                        initialPositions = JSON.parse(storedPositions);
+                    } catch(e) {}
+                }
 
-            // Генеруємо фіксовані позиції за сіткою для нових іконок
-            const updatedPositions = { ...initialPositions };
-            initialIcons.forEach((project, index) => {
-                if (!updatedPositions[project.id]) {
-                    // Сітка: колони по 100px, рядки по 100px
-                    const col = Math.floor(index / 5);
-                    const row = index % 5;
-                    updatedPositions[project.id] = {
-                        x: 20 + col * 100,
-                        y: 20 + row * 100
-                    };
+                const updatedPositions = { ...initialPositions };
+                initialIcons.forEach((project, index) => {
+                    if (!updatedPositions[project.id]) {
+                        const col = Math.floor(index / 5);
+                        const row = index % 5;
+                        updatedPositions[project.id] = {
+                            x: 20 + col * 100,
+                            y: 20 + row * 100
+                        };
+                    }
+                });
+
+                setIconPositions(updatedPositions);
+
+                const storedRecycled = localStorage.getItem('recycledItems');
+                if (storedRecycled) {
+                    try {
+                        setRecycledItems(JSON.parse(storedRecycled));
+                    } catch(e) {}
                 }
             });
-
-            setIconPositions(updatedPositions);
-
-            const storedRecycled = localStorage.getItem('recycledItems');
-            if (storedRecycled) {
-                try {
-                    setRecycledItems(JSON.parse(storedRecycled));
-                } catch(e) {}
-            }
-        });
-}, []);
+    }, []);
 
     // Save state
     useEffect(() => {
@@ -155,34 +153,34 @@ function SeismicExplorer() {
             [windowId]: { ...prev[windowId], minimized: true }
         }));
     };
-const toggleMaximizeWindow = (windowId) => {
-    playAudio('click');
-    setWindows(prev => ({
-        ...prev,
-        [windowId]: { ...prev[windowId], maximized: !prev[windowId].maximized }
-    }));
-};
-    const toggleWindowTaskbar = (windowId) => {
-    playAudio('click');
-    setWindows(prev => {
-        const currentWin = prev[windowId];
-        if (!currentWin) return prev;
 
-        // Якщо згорнуте — відновлюємо
-        if (currentWin.minimized) {
-            return {
-                ...prev,
-                [windowId]: { ...prev[windowId], minimized: false, focused: true }
-            };
-        } else {
-            // Якщо вже відкрите — згортаємо
-            return {
-                ...prev,
-                [windowId]: { ...prev[windowId], minimized: true }
-            };
-        }
-    });
-};
+    const toggleMaximizeWindow = (windowId) => {
+        playAudio('click');
+        setWindows(prev => ({
+            ...prev,
+            [windowId]: { ...prev[windowId], maximized: !prev[windowId].maximized }
+        }));
+    };
+
+    const toggleWindowTaskbar = (windowId) => {
+        playAudio('click');
+        setWindows(prev => {
+            const currentWin = prev[windowId];
+            if (!currentWin) return prev;
+
+            if (currentWin.minimized) {
+                return {
+                    ...prev,
+                    [windowId]: { ...prev[windowId], minimized: false, focused: true }
+                };
+            } else {
+                return {
+                    ...prev,
+                    [windowId]: { ...prev[windowId], minimized: true }
+                };
+            }
+        });
+    };
 
     const deleteIcon = (projectId, e) => {
         e.stopPropagation();
@@ -236,13 +234,12 @@ const toggleMaximizeWindow = (windowId) => {
     };
 
     const handleMouseUp = () => {
-    if (draggedIconId) {
-        // Гарантуємо збереження поточної позиції при відпусканні
-        setIconPositions(prev => ({ ...prev }));
-    }
-    setDraggedIconId(null);
-    setDragStartPos(null);
-};
+        if (draggedIconId) {
+            setIconPositions(prev => ({ ...prev }));
+        }
+        setDraggedIconId(null);
+        setDragStartPos(null);
+    };
 
     const handleDoubleClick = (project) => {
         openWindow(project);
@@ -310,29 +307,29 @@ const toggleMaximizeWindow = (windowId) => {
             {/* Taskbar */}
             <div className="taskbar">
                 <button 
-    className="start-button"
-    onClick={(e) => {
-        e.stopPropagation();
-        setShowStartMenu(!showStartMenu);
-    }}
->
-    <img src={config.seismic.logo} alt="Seismic" className="start-logo" />
-</button>
+                    className="start-button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setShowStartMenu(!showStartMenu);
+                    }}
+                >
+                    <img src={config.seismic.logo} alt="Seismic" className="start-logo" />
+                </button>
 
                 <div className="taskbar-separator"></div>
 
                 <div className="taskbar-buttons">
-    {Object.values(windows).map(w => (
-        <button
-            key={w.id}
-            className={`taskbar-btn ${!w.minimized ? 'active' : ''}`}
-            onClick={() => toggleWindowTaskbar(w.id)}
-        >
-            <img src={w.project.logo} alt={w.project.name} style={{ pointerEvents: 'none' }} />
-            {w.project.name}
-        </button>
-    ))}
-</div>
+                    {Object.values(windows).map(w => (
+                        <button
+                            key={w.id}
+                            className={`taskbar-btn ${!w.minimized ? 'active' : ''}`}
+                            onClick={() => toggleWindowTaskbar(w.id)}
+                        >
+                            <img src={w.project.logo} alt={w.project.name} style={{ pointerEvents: 'none' }} />
+                            {w.project.name}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Start Menu */}
@@ -348,9 +345,7 @@ const toggleMaximizeWindow = (windowId) => {
                                 <div 
                                     key={p.id}
                                     className="submenu-item"
-                                    onClick={() => {
-                                        openWindow(p);
-                                    }}
+                                    onClick={() => openWindow(p)}
                                 >
                                     <img src={p.logo} alt={p.name} style={{ pointerEvents: 'none' }} />
                                     {p.name}
@@ -426,53 +421,6 @@ const toggleMaximizeWindow = (windowId) => {
                 </div>
             )}
 
-        <div className="start-menu-item">
-            ⚙️ Settings
-            <div className="submenu">
-                <div 
-                    className="submenu-item"
-                    onClick={() => {
-                        setSoundEnabled(!soundEnabled);
-                        playAudio('click');
-                    }}
-                >
-                    {soundEnabled ? '🔊' : '🔇'} Sound ({soundEnabled ? 'On' : 'Off'})
-                </div>
-            </div>
-        </div>
-
-        <div className="start-menu-item">
-            ℹ️ Help
-            <div className="submenu">
-                <a href={config.seismic.docs} target="_blank" rel="noopener noreferrer" className="submenu-item" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    📚 Seismic Docs
-                </a>
-                <a href={config.seismic.discord} target="_blank" rel="noopener noreferrer" className="submenu-item" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    💬 Discord
-                </a>
-                <a href={config.seismic.twitter} target="_blank" rel="noopener noreferrer" className="submenu-item" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    🐦 Twitter
-                </a>
-            </div>
-        </div>
-
-        <div className="start-menu-item separator"></div>
-
-        <div 
-            className="start-menu-item"
-            onClick={() => {
-                if (confirm('Are you sure you want to shut down?')) {
-                    alert('Thanks for using Seismic Explorer!');
-                }
-                setShowStartMenu(false);
-            }}
-        >
-            🔌 Shut Down...
-        </div>
-    </div>
-</div>
-)}
-
             {/* Recycle Bin Modal */}
             {showRecycleBin && (
                 <div className="modal-overlay" onClick={() => setShowRecycleBin(false)}>
@@ -542,7 +490,7 @@ function Window({ window, onClose, onMinimize, onMaximize }) {
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
     const handleTitleMouseDown = (e) => {
-        if (e.button !== 0 || window.maximized) return; // Забороняємо перетягувати, якщо розгорнуто на весь екран
+        if (e.button !== 0 || window.maximized) return;
         setIsDragging(true);
         setDragOffset({
             x: e.clientX - pos.x,
@@ -550,19 +498,19 @@ function Window({ window, onClose, onMinimize, onMaximize }) {
         });
     };
 
-    const handleMouseMove = (e) => {
-        if (isDragging && !window.maximized) {
-            const newX = Math.max(0, e.clientX - dragOffset.x);
-            const newY = Math.max(0, e.clientY - dragOffset.y);
-            setPos({ x: newX, y: newY });
-        }
-    };
-
-    const handleMouseUp = () => {
-        setIsDragging(false);
-    };
-
     useEffect(() => {
+        const handleMouseMove = (e) => {
+            if (isDragging && !window.maximized) {
+                const newX = Math.max(0, e.clientX - dragOffset.x);
+                const newY = Math.max(0, e.clientY - dragOffset.y);
+                setPos({ x: newX, y: newY });
+            }
+        };
+
+        const handleMouseUp = () => {
+            setIsDragging(false);
+        };
+
         if (isDragging) {
             document.addEventListener('mousemove', handleMouseMove);
             document.addEventListener('mouseup', handleMouseUp);
@@ -571,14 +519,13 @@ function Window({ window, onClose, onMinimize, onMaximize }) {
                 document.removeEventListener('mouseup', handleMouseUp);
             };
         }
-    }, [isDragging, dragOffset, pos]);
+    }, [isDragging, dragOffset, window.maximized]);
 
-    // Стилі для звичайного та розгорнутого стану
     const windowStyle = window.maximized ? {
         left: '0px',
         top: '0px',
         width: '100vw',
-        height: 'calc(100vh - 38px)', // Залишаємо місце під Taskbar
+        height: 'calc(100vh - 38px)',
         zIndex: window.focused ? 11 : 10
     } : {
         left: `${pos.x}px`,
@@ -614,10 +561,11 @@ function Window({ window, onClose, onMinimize, onMaximize }) {
                     </div>
                 )}
                 <iframe
-                    className="window-iframe"
+                    className={`window-iframe ${isDragging ? 'iframe-dragging' : ''}`}
                     src={window.project.url}
                     title={window.project.name}
                     onLoad={() => setIsLoading(false)}
+                    style={{ pointerEvents: isDragging ? 'none' : 'auto' }}
                     sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-presentation"
                 />
             </div>
@@ -626,19 +574,3 @@ function Window({ window, onClose, onMinimize, onMaximize }) {
 }
 
 ReactDOM.render(<SeismicExplorer />, document.getElementById('root'));
-// Коли затискаємо мишку будь-де на сторінці (початок руху / перетягування):
-document.addEventListener('mousedown', (e) => {
-    // Перевіряємо, чи ми затиснули саме шапку вікна
-    if (e.target.closest('.window-title')) {
-        document.querySelectorAll('.window-iframe').forEach(iframe => {
-            iframe.classList.add('iframe-dragging');
-        });
-    }
-});
-
-// Коли відпускаємо мишку (завершення руху):
-document.addEventListener('mouseup', () => {
-    document.querySelectorAll('.window-iframe').forEach(iframe => {
-        iframe.classList.remove('iframe-dragging');
-    });
-});
