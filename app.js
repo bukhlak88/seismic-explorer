@@ -365,23 +365,23 @@ const toggleMaximizeWindow = (windowId) => {
         <div className="start-menu-item separator"></div>
 
         <div className="start-menu-item">
-            📄 Documents
-            <div className="start-menu-item">
-    📄 Documents
-    <div className="start-menu-item">
-    📄 Documents
-    <div className="submenu">
-        <div 
-            className="submenu-item"
-            onClick={() => {
-                alert('Seismic: A privacy-enabled blockchain for secure financial applications and neobanks.');
-                setShowStartMenu(false);
-            }}
-        >
-            ℹ️ About Seismic
-        </div>
-    </div>
-</div>
+                        📄 Documents
+                        <div className="submenu">
+                            <div 
+                                className="submenu-item"
+                                onClick={() => {
+                                    openWindow({
+                                        id: 'seismic-about',
+                                        name: 'About Seismic',
+                                        logo: config.seismic.logo,
+                                        url: config.seismic.docs || config.seismic.url || 'https://seismic.systems'
+                                    });
+                                }}
+                            >
+                                ℹ️ About Seismic
+                            </div>
+                        </div>
+                    </div>
 
         <div className="start-menu-item">
             ⚙️ Settings
