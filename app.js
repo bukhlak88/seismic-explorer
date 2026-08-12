@@ -63,23 +63,32 @@ function SeismicExplorer() {
         e.preventDefault();
         e.stopPropagation();
         closeContextMenus();
-        setBinMenu({
-            visible: true,
-            x: e.clientX,
-            y: e.clientY
-        });
+        
+        let x = e.clientX;
+        let y = e.clientY;
+        const menuWidth = 150;
+        const menuHeight = 60;
+        
+        if (x + menuWidth > window.innerWidth) x -= menuWidth;
+        if (y + menuHeight > window.innerHeight) y -= menuHeight;
+
+        setBinMenu({ visible: true, x, y });
     };
 
     const handleIconContextMenu = (e, project) => {
         e.preventDefault();
         e.stopPropagation();
         closeContextMenus();
-        setIconMenu({
-            visible: true,
-            x: e.clientX,
-            y: e.clientY,
-            project
-        });
+
+        let x = e.clientX;
+        let y = e.clientY;
+        const menuWidth = 120;
+        const menuHeight = 60;
+        
+        if (x + menuWidth > window.innerWidth) x -= menuWidth;
+        if (y + menuHeight > window.innerHeight) y -= menuHeight;
+
+        setIconMenu({ visible: true, x, y, project });
     };
 
     const closeContextMenus = () => {
@@ -87,68 +96,30 @@ function SeismicExplorer() {
         setIconMenu({ visible: false, x: 0, y: 0, project: null });
     };
 
-    // Load config
+    // Load config (без збереження стану іконок/кошика в localStorage)
     useEffect(() => {
         fetch('config.json')
             .then(r => r.json())
             .then(data => {
                 setConfig(data);
                 
-                const storedIcons = localStorage.getItem('desktopIcons');
-                const storedPositions = localStorage.getItem('iconPositions');
-                
-                let initialIcons = data.projects;
-                if (storedIcons) {
-                    try {
-                        initialIcons = JSON.parse(storedIcons);
-                    } catch(e) {}
-                }
+                const initialIcons = data.projects;
                 setDesktopIcons(initialIcons);
 
                 let initialPositions = {};
-                if (storedPositions) {
-                    try {
-                        initialPositions = JSON.parse(storedPositions);
-                    } catch(e) {}
-                }
-
-                const updatedPositions = { ...initialPositions };
                 initialIcons.forEach((project, index) => {
-                    if (!updatedPositions[project.id]) {
-                        const col = Math.floor(index / 5);
-                        const row = index % 5;
-                        updatedPositions[project.id] = {
-                            x: 20 + col * 100,
-                            y: 20 + row * 100
-                        };
-                    }
+                    const col = Math.floor(index / 5);
+                    const row = index % 5;
+                    initialPositions[project.id] = {
+                        x: 20 + col * 100,
+                        y: 20 + row * 100
+                    };
                 });
 
-                setIconPositions(updatedPositions);
-
-                const storedRecycled = localStorage.getItem('recycledItems');
-                if (storedRecycled) {
-                    try {
-                        setRecycledItems(JSON.parse(storedRecycled));
-                    } catch(e) {}
-                }
+                setIconPositions(initialPositions);
+                setRecycledItems([]);
             });
     }, []);
-
-    // Save state
-    useEffect(() => {
-        if (desktopIcons.length > 0) {
-            localStorage.setItem('desktopIcons', JSON.stringify(desktopIcons));
-        }
-    }, [desktopIcons]);
-
-    useEffect(() => {
-        localStorage.setItem('iconPositions', JSON.stringify(iconPositions));
-    }, [iconPositions]);
-
-    useEffect(() => {
-        localStorage.setItem('recycledItems', JSON.stringify(recycledItems));
-    }, [recycledItems]);
 
     const playAudio = (type) => {
         if (soundEnabled) playSound(type);
@@ -233,7 +204,7 @@ function SeismicExplorer() {
         const icon = recycledItems.find(i => i.id === projectId);
         if (icon) {
             setDesktopIcons(prev => [...prev, icon]);
-            setRecycledItems(prev => prev.filter(i => i.id !== projectId));
+            setRecycledItems(prev => recycledItems.filter(i => i.id !== projectId));
         }
     };
 
@@ -281,9 +252,6 @@ function SeismicExplorer() {
     };
 
     const handleMouseUp = () => {
-        if (draggedIconId) {
-            setIconPositions(prev => ({ ...prev }));
-        }
         setDraggedIconId(null);
         setDragStartPos(null);
     };
