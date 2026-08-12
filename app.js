@@ -337,34 +337,31 @@ const toggleMaximizeWindow = (windowId) => {
 
             {/* Start Menu */}
             {showStartMenu && (
-    <div 
-        className="start-menu"
-        onClick={(e) => e.stopPropagation()}
-    >
-        {/* ✅ ВИПРАВЛЕНО: прибрано onClick з setShowRecycleBin */}
-        <div className="start-menu-item">
-            🗂️ Programs
-            <div className="submenu">
-    {config.projects.map(p => (
-        <div 
-            key={p.id}
-            className="submenu-item"
-            onClick={() => {
-                // Відкриває Twitter проєкту в новій вкладці
-                window.open(p.twitter || p.url, '_blank', 'noopener,noreferrer');
-                setShowStartMenu(false); // Закриває Start Menu після кліку
-            }}
-        >
-            <img src={p.logo} alt={p.name} style={{ pointerEvents: 'none' }} />
-            {p.name}
-        </div>
-    ))}
-</div>
-        </div>
+                <div 
+                    className="start-menu"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="start-menu-item">
+                        🗂️ Programs
+                        <div className="submenu">
+                            {config.projects.map(p => (
+                                <div 
+                                    key={p.id}
+                                    className="submenu-item"
+                                    onClick={() => {
+                                        openWindow(p);
+                                    }}
+                                >
+                                    <img src={p.logo} alt={p.name} style={{ pointerEvents: 'none' }} />
+                                    {p.name}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
 
-        <div className="start-menu-item separator"></div>
+                    <div className="start-menu-item separator"></div>
 
-        <div className="start-menu-item">
+                    <div className="start-menu-item">
                         📄 Documents
                         <div className="submenu">
                             <div 
@@ -382,6 +379,52 @@ const toggleMaximizeWindow = (windowId) => {
                             </div>
                         </div>
                     </div>
+
+                    <div className="start-menu-item">
+                        ⚙️ Settings
+                        <div className="submenu">
+                            <div 
+                                className="submenu-item"
+                                onClick={() => {
+                                    setSoundEnabled(!soundEnabled);
+                                    playAudio('click');
+                                }}
+                            >
+                                {soundEnabled ? '🔊' : '🔇'} Sound ({soundEnabled ? 'On' : 'Off'})
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="start-menu-item">
+                        ℹ️ Help
+                        <div className="submenu">
+                            <a href={config.seismic.docs} target="_blank" rel="noopener noreferrer" className="submenu-item" style={{ textDecoration: 'none', color: 'inherit' }}>
+                                📚 Seismic Docs
+                            </a>
+                            <a href={config.seismic.discord} target="_blank" rel="noopener noreferrer" className="submenu-item" style={{ textDecoration: 'none', color: 'inherit' }}>
+                                💬 Discord
+                            </a>
+                            <a href={config.seismic.twitter} target="_blank" rel="noopener noreferrer" className="submenu-item" style={{ textDecoration: 'none', color: 'inherit' }}>
+                                🐦 Twitter
+                            </a>
+                        </div>
+                    </div>
+
+                    <div className="start-menu-item separator"></div>
+
+                    <div 
+                        className="start-menu-item"
+                        onClick={() => {
+                            if (confirm('Are you sure you want to shut down?')) {
+                                alert('Thanks for using Seismic Explorer!');
+                            }
+                            setShowStartMenu(false);
+                        }}
+                    >
+                        🔌 Shut Down...
+                    </div>
+                </div>
+            )}
 
         <div className="start-menu-item">
             ⚙️ Settings
