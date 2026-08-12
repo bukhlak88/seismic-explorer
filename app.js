@@ -1,39 +1,40 @@
 const { useState, useEffect, useRef } = React;
 
-// Windows XP Sounds
 const playSound = (type) => {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    switch(type) {
-        case 'click':
-            oscillator.frequency.value = 1000;
-            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.1);
-            break;
-        case 'open':
-            oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
-            oscillator.frequency.linearRampToValueAtTime(800, audioContext.currentTime + 0.2);
-            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.2);
-            break;
-        case 'close':
-            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-            oscillator.frequency.linearRampToValueAtTime(400, audioContext.currentTime + 0.15);
-            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.15);
-            break;
-    }
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        switch(type) {
+            case 'click':
+                oscillator.frequency.value = 1000;
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.1);
+                break;
+            case 'open':
+                oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+                oscillator.frequency.linearRampToValueAtTime(800, audioContext.currentTime + 0.2);
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.2);
+                break;
+            case 'close':
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                oscillator.frequency.linearRampToValueAtTime(400, audioContext.currentTime + 0.15);
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.15);
+                break;
+        }
+    } catch(e) {}
 };
 
 function SeismicExplorer() {
@@ -43,10 +44,10 @@ function SeismicExplorer() {
     const [recycledItems, setRecycledItems] = useState([]);
     const [showStartMenu, setShowStartMenu] = useState(false);
     const [showRecycleBin, setShowRecycleBin] = useState(false);
-    const [selectedIcon, setSelectedIcon] = useState(null);
     const [soundEnabled, setSoundEnabled] = useState(true);
-    const [draggedIcon, setDraggedIcon] = useState(null);
-    const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+    const [draggedIconId, setDraggedIconId] = useState(null);
+    const [iconPositions, setIconPositions] = useState({});
+    const desktopRef = useRef(null);
 
     // Load config
     useEffect(() => {
@@ -54,14 +55,25 @@ function SeismicExplorer() {
             .then(r => r.json())
             .then(data => {
                 setConfig(data);
-                setDesktopIcons(data.projects.map(p => ({ ...p, visible: true })));
                 const stored = localStorage.getItem('desktopIcons');
+                const storedPositions = localStorage.getItem('iconPositions');
+                
                 if (stored) {
                     try {
-                        const parsed = JSON.parse(stored);
-                        setDesktopIcons(parsed);
+                        setDesktopIcons(JSON.parse(stored));
+                    } catch(e) {
+                        setDesktopIcons(data.projects);
+                    }
+                } else {
+                    setDesktopIcons(data.projects);
+                }
+                
+                if (storedPositions) {
+                    try {
+                        setIconPositions(JSON.parse(storedPositions));
                     } catch(e) {}
                 }
+                
                 const storedRecycled = localStorage.getItem('recycledItems');
                 if (storedRecycled) {
                     try {
@@ -71,12 +83,16 @@ function SeismicExplorer() {
             });
     }, []);
 
-    // Save state to localStorage
+    // Save state
     useEffect(() => {
         if (desktopIcons.length > 0) {
             localStorage.setItem('desktopIcons', JSON.stringify(desktopIcons));
         }
     }, [desktopIcons]);
+
+    useEffect(() => {
+        localStorage.setItem('iconPositions', JSON.stringify(iconPositions));
+    }, [iconPositions]);
 
     useEffect(() => {
         localStorage.setItem('recycledItems', JSON.stringify(recycledItems));
@@ -89,18 +105,21 @@ function SeismicExplorer() {
     const openWindow = (project) => {
         playAudio('open');
         const windowId = `window-${project.id}`;
+        
+        const newWindow = {
+            id: windowId,
+            project,
+            x: Math.random() * 200 + 100,
+            y: Math.random() * 200 + 100,
+            width: 800,
+            height: 600,
+            minimized: false,
+            focused: true
+        };
+        
         setWindows(prev => ({
             ...prev,
-            [windowId]: {
-                id: windowId,
-                project,
-                x: Math.random() * 200 + 100,
-                y: Math.random() * 200 + 100,
-                width: 800,
-                height: 600,
-                minimized: false,
-                focused: true
-            }
+            [windowId]: newWindow
         }));
         setShowStartMenu(false);
     };
@@ -122,21 +141,6 @@ function SeismicExplorer() {
         }));
     };
 
-    const toggleMaximize = (windowId) => {
-        playAudio('click');
-        setWindows(prev => ({
-            ...prev,
-            [windowId]: { 
-                ...prev[windowId], 
-                maximized: !prev[windowId].maximized,
-                x: prev[windowId].maximized ? 100 : 0,
-                y: prev[windowId].maximized ? 100 : 0,
-                width: prev[windowId].maximized ? 800 : window.innerWidth,
-                height: prev[windowId].maximized ? 600 : window.innerHeight - 28
-            }
-        }));
-    };
-
     const restoreWindow = (windowId) => {
         playAudio('click');
         setWindows(prev => ({
@@ -145,7 +149,8 @@ function SeismicExplorer() {
         }));
     };
 
-    const deleteIcon = (projectId) => {
+    const deleteIcon = (projectId, e) => {
+        e.stopPropagation();
         playAudio('click');
         const icon = desktopIcons.find(i => i.id === projectId);
         if (icon) {
@@ -168,76 +173,86 @@ function SeismicExplorer() {
         setRecycledItems([]);
     };
 
-    const handleIconDragStart = (e, project) => {
-        setDraggedIcon(project.id);
-        const icon = desktopIcons.find(i => i.id === project.id);
-        if (icon) {
-            setDragOffset({
-                x: e.clientX - icon.x,
-                y: e.clientY - icon.y
-            });
-        }
+    const handleIconMouseDown = (e, projectId) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        setDraggedIconId(projectId);
     };
 
     const handleMouseMove = (e) => {
-        if (draggedIcon) {
-            setDesktopIcons(prev => prev.map(icon => 
-                icon.id === draggedIcon 
-                    ? { ...icon, x: e.clientX - dragOffset.x, y: e.clientY - dragOffset.y }
-                    : icon
-            ));
+        if (draggedIconId && desktopRef.current) {
+            const rect = desktopRef.current.getBoundingClientRect();
+            const x = Math.max(0, Math.min(e.clientX - rect.left - 40, window.innerWidth - 100));
+            const y = Math.max(0, Math.min(e.clientY - rect.top - 40, window.innerHeight - 100));
+            
+            setIconPositions(prev => ({
+                ...prev,
+                [draggedIconId]: { x, y }
+            }));
         }
     };
 
     const handleMouseUp = () => {
-        setDraggedIcon(null);
+        setDraggedIconId(null);
+    };
+
+    const handleDoubleClick = (project) => {
+        openWindow(project);
+    };
+
+    const handleContextMenu = (e, projectId) => {
+        e.preventDefault();
+        deleteIcon(projectId, e);
     };
 
     if (!config) return <div style={{ color: 'white', padding: '20px' }}>Loading...</div>;
 
     return (
         <div 
-            id="desktop" 
-            style={{ position: 'relative', width: '100vw', height: '100vh' }}
+            ref={desktopRef}
+            id="desktop"
+            style={{
+                position: 'relative',
+                width: '100vw',
+                height: '100vh',
+                overflow: 'hidden'
+            }}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
-            onClick={() => { setShowStartMenu(false); setSelectedIcon(null); }}
+            onMouseLeave={handleMouseUp}
+            onClick={() => setShowStartMenu(false)}
         >
             {/* Desktop Icons */}
-            {desktopIcons.map(project => (
-                <div
-                    key={project.id}
-                    className={`desktop-icon ${selectedIcon === project.id ? 'selected' : ''}`}
-                    style={{
-                        left: `${project.x || Math.random() * 600}px`,
-                        top: `${project.y || Math.random() * 400}px`,
-                        cursor: draggedIcon === project.id ? 'grabbing' : 'pointer'
-                    }}
-                    onMouseDown={(e) => {
-                        e.preventDefault();
-                        setSelectedIcon(project.id);
-                        if (e.detail === 1) {
-                            handleIconDragStart(e, project);
-                        }
-                    }}
-                    onDoubleClick={() => openWindow(project)}
-                    onContextMenu={(e) => {
-                        e.preventDefault();
-                        deleteIcon(project.id);
-                    }}
-                >
-                    <div className="icon-image">
-                        <img src={project.logo} alt={project.name} />
+            {desktopIcons.map(project => {
+                const pos = iconPositions[project.id] || { x: Math.random() * 600, y: Math.random() * 400 };
+                return (
+                    <div
+                        key={project.id}
+                        className="desktop-icon"
+                        style={{
+                            left: `${pos.x}px`,
+                            top: `${pos.y}px`,
+                            cursor: draggedIconId === project.id ? 'grabbing' : 'grab'
+                        }}
+                        onMouseDown={(e) => handleIconMouseDown(e, project.id)}
+                        onDoubleClick={() => handleDoubleClick(project)}
+                        onContextMenu={(e) => handleContextMenu(e, project.id)}
+                    >
+                        <div className="icon-image">
+                            <img src={project.logo} alt={project.name} onError={(e) => {
+                                e.target.style.display = 'none';
+                            }} />
+                        </div>
+                        <div className="icon-label">{project.name}</div>
                     </div>
-                    <div className="icon-label">{project.name}</div>
-                </div>
-            ))}
+                );
+            })}
 
             {/* Recycle Bin */}
             <div
                 className="recycle-bin"
                 onDoubleClick={() => setShowRecycleBin(true)}
-                onClick={() => setSelectedIcon('recycle-bin')}
+                style={{ cursor: 'pointer' }}
             >
                 <div className="bin-image">
                     <span style={{ fontSize: '40px' }}>🗑️</span>
@@ -249,7 +264,10 @@ function SeismicExplorer() {
             <div className="taskbar">
                 <button 
                     className="start-button"
-                    onClick={() => setShowStartMenu(!showStartMenu)}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setShowStartMenu(!showStartMenu);
+                    }}
                 >
                     <img src={config.seismic.logo} alt="Seismic" />
                     Start
@@ -261,7 +279,7 @@ function SeismicExplorer() {
                     {Object.values(windows).filter(w => !w.minimized).map(w => (
                         <button
                             key={w.id}
-                            className={`taskbar-btn ${w.focused ? 'active' : ''}`}
+                            className="taskbar-btn"
                             onClick={() => restoreWindow(w.id)}
                         >
                             <img src={w.project.logo} alt={w.project.name} />
@@ -273,8 +291,14 @@ function SeismicExplorer() {
 
             {/* Start Menu */}
             {showStartMenu && (
-                <div className="start-menu" onClick={(e) => e.stopPropagation()}>
-                    <div className="start-menu-item" onClick={() => { setShowStartMenu(false); setShowRecycleBin(true); }}>
+                <div 
+                    className="start-menu"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="start-menu-item" onClick={() => {
+                        setShowStartMenu(false);
+                        setShowRecycleBin(true);
+                    }}>
                         🗂️ Programs
                         <div className="submenu">
                             {config.projects.map(p => (
@@ -298,11 +322,11 @@ function SeismicExplorer() {
                             <div 
                                 className="submenu-item"
                                 onClick={() => {
-                                    alert('Seismic is a privacy-enabled blockchain for secure financial applications.');
+                                    alert('Seismic: A privacy-enabled blockchain for secure financial applications and neobanks.');
                                     setShowStartMenu(false);
                                 }}
                             >
-                                About Seismic
+                                ℹ️ About Seismic
                             </div>
                         </div>
                     </div>
@@ -325,13 +349,13 @@ function SeismicExplorer() {
                     <div className="start-menu-item">
                         ℹ️ Help
                         <div className="submenu">
-                            <a href={config.seismic.docs} target="_blank" className="submenu-item" style={{ textDecoration: 'none', color: 'inherit' }}>
+                            <a href={config.seismic.docs} target="_blank" rel="noopener noreferrer" className="submenu-item" style={{ textDecoration: 'none', color: 'inherit' }}>
                                 📚 Seismic Docs
                             </a>
-                            <a href={config.seismic.discord} target="_blank" className="submenu-item" style={{ textDecoration: 'none', color: 'inherit' }}>
+                            <a href={config.seismic.discord} target="_blank" rel="noopener noreferrer" className="submenu-item" style={{ textDecoration: 'none', color: 'inherit' }}>
                                 💬 Discord
                             </a>
-                            <a href={config.seismic.twitter} target="_blank" className="submenu-item" style={{ textDecoration: 'none', color: 'inherit' }}>
+                            <a href={config.seismic.twitter} target="_blank" rel="noopener noreferrer" className="submenu-item" style={{ textDecoration: 'none', color: 'inherit' }}>
                                 🐦 Twitter
                             </a>
                         </div>
@@ -407,8 +431,6 @@ function SeismicExplorer() {
                         window={window}
                         onClose={() => closeWindow(window.id)}
                         onMinimize={() => minimizeWindow(window.id)}
-                        onMaximize={() => toggleMaximize(window.id)}
-                        onRestore={() => restoreWindow(window.id)}
                     />
                 )
             ))}
@@ -416,42 +438,63 @@ function SeismicExplorer() {
     );
 }
 
-function Window({ window, onClose, onMinimize, onMaximize, onRestore }) {
+function Window({ window, onClose, onMinimize }) {
     const [isLoading, setIsLoading] = useState(true);
+    const [pos, setPos] = useState({ x: window.x, y: window.y });
+    const [isDragging, setIsDragging] = useState(false);
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-    const [windowPos, setWindowPos] = useState({ x: window.x, y: window.y });
 
-    const handleMouseDown = (e) => {
+    const handleTitleMouseDown = (e) => {
+        if (e.button !== 0) return;
+        setIsDragging(true);
         setDragOffset({
-            x: e.clientX - windowPos.x,
-            y: e.clientY - windowPos.y
+            x: e.clientX - pos.x,
+            y: e.clientY - pos.y
         });
     };
 
     const handleMouseMove = (e) => {
-        setWindowPos({
-            x: e.clientX - dragOffset.x,
-            y: e.clientY - dragOffset.y
-        });
+        if (isDragging) {
+            setPos({
+                x: e.clientX - dragOffset.x,
+                y: e.clientY - dragOffset.y
+            });
+        }
     };
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+    };
+
+    useEffect(() => {
+        if (isDragging) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            return () => {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+            };
+        }
+    }, [isDragging, dragOffset]);
 
     return (
         <div
             className="window"
             style={{
-                left: `${windowPos.x}px`,
-                top: `${windowPos.y}px`,
+                left: `${pos.x}px`,
+                top: `${pos.y}px`,
                 width: `${window.width}px`,
                 height: `${window.height}px`,
+                zIndex: window.focused ? 11 : 10
             }}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={() => setDragOffset({ x: 0, y: 0 })}
         >
-            <div className="window-title" onMouseDown={handleMouseDown}>
+            <div 
+                className="window-title"
+                onMouseDown={handleTitleMouseDown}
+            >
                 <span>{window.project.name}</span>
                 <div className="window-controls">
                     <button className="window-btn" onClick={onMinimize}>_</button>
-                    <button className="window-btn" onClick={onMaximize}>□</button>
                     <button className="window-btn" onClick={onClose}>✕</button>
                 </div>
             </div>
