@@ -310,15 +310,14 @@ const toggleMaximizeWindow = (windowId) => {
             {/* Taskbar */}
             <div className="taskbar">
                 <button 
-                    className="start-button"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setShowStartMenu(!showStartMenu);
-                    }}
-                >
-                    <img src={config.seismic.logo} alt="Seismic" style={{ pointerEvents: 'none' }} />
-                    Start
-                </button>
+    className="start-button"
+    onClick={(e) => {
+        e.stopPropagation();
+        setShowStartMenu(!showStartMenu);
+    }}
+>
+    <img src={config.seismic.logo} alt="Seismic" className="start-logo" />
+</button>
 
                 <div className="taskbar-separator"></div>
 
